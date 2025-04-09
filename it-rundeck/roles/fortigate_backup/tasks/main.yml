@@ -1,0 +1,17 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Fortigate Backup playbook
+# Author: marioc@ciandt.com
+
+# Import tasks below:
+- import_tasks: fwbh.yml
+- import_tasks: fwche.yml
+- import_tasks: fwcps.yml
+- import_tasks: fwctb.yml
+- import_tasks: fwjp.yml
+- import_tasks: fwngb.yml
+- import_tasks: fwoak.yml
+- import_tasks: fwpctn.yml

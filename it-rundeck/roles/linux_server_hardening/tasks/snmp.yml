@@ -1,0 +1,49 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Hardening playbook
+# Author: marioc@ciandt.com
+
+# Check if SNMP is installed, if not, install it (CentOS/RHEL/AmazonLinux)
+- name: "Check if SNMP is installed. If not, install it on CentOS/RHEL/AmazonLinux"
+  yum:
+    name: net-snmp
+    state: present
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon"
+  tags: snmp
+
+# Check if SNMP is installed, if not, install it (Ubuntu)
+- name: "Check if SNMP is installed. If not, install it on Ubuntu"
+  apt:
+    name: snmpd
+    state: present
+  when: ansible_facts['distribution']=="Ubuntu"
+  tags: snmp
+
+# Make sure SNMP is started and enabled
+- name: "Make sure SNMP is started, and is enabled on restart"
+  service:
+    name: snmpd
+    state: started
+    enabled: yes
+  tags: snmp
+
+# Copy SNMP template to configure service
+- name: "Make sure SNMPD is configured"
+  template:
+    src: snmpd.conf.j2
+    dest: /etc/snmp/snmpd.conf
+  notify:
+    - restart snmpd
+  tags: snmp
+
+# Restart SNMP service
+- name: "Restart SNMPD Service"
+  service:
+    name: snmpd
+    state: restarted
+  tags: snmp

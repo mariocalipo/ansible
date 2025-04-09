@@ -1,0 +1,9 @@
+---
+- name: Adding {{ target_vm|lower }} to /etc/hosts
+  lineinfile:
+      dest: /etc/hosts
+      regexp: '^{{ ipaddr }}.*{{ fqdn|regex_replace("\..*$","") }}*'
+      line: '{{ ipaddr }}	{{ fqdn }}	{{ fqdn|regex_replace("\..*$","") }}  # added by vmdeploy'
+      state: present
+#      regexp: '^{{ ipaddr }}.*{{ target_vm|lower }}*'
+#      line: '{{ ipaddr }}	{{ fqdn }}	{{ target_vm|lower }}  # added by vmdeploy'

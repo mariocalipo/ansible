@@ -1,0 +1,119 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Compliance playbook
+# Author: Pillar Squad
+
+# Check if Splunk service exists
+- name: "Check if splunk service file exists"
+  stat:
+    path: /etc/systemd/system/splunk.service
+  register: splunkfile
+
+# Download Splunk and store into /opt (Ubuntu)
+- name: "Download Splunk Forwarder from store.ciandt.com for Ubuntu"
+  get_url:
+    url: https://store.ciandt.com/apps/infra_hardening/splunkforwarder.deb
+    dest: /opt/
+    owner: root
+    group: root
+    mode: u=rwx,g=rwx,o=r
+    headers: 
+      X-Token: HUEJEsgWQGAE4k7EUdGQvYba6uPRxsPsGXzT8RnHAE7JskB8nhwdM58dDCXFGf6U
+    validate_certs: no
+  when: ansible_facts['distribution']=="Ubuntu" and
+        splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+  tags: splunk
+
+# Install Splunk (Debian/Ubuntu)
+- name: "Install Splunk Forwarder for Debian/Ubuntu System"
+  apt:
+    deb: /opt/splunkforwarder.deb
+    state: present
+  when: ansible_facts['distribution']=="Ubuntu" and
+        splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+  tags: splunk
+
+# Download Splunk and store into /opt (CentOS/RHEL/AmazonLinux)
+- name: "Download Splunk Forwarder from store.ciandt.com for CentOS/RHEL/AmazonLinux"
+  get_url:
+    url: https://store.ciandt.com/apps/infra_hardening/splunkforwarder.rpm
+    dest: /opt/
+    owner: root
+    group: root
+    mode: u=rwx,g=rwx,o=r
+    headers: 
+      X-Token: HUEJEsgWQGAE4k7EUdGQvYba6uPRxsPsGXzT8RnHAE7JskB8nhwdM58dDCXFGf6U
+    validate_certs: no
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon" and
+        splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+  tags: splunk
+
+# Install Splunk (CentOS/RHEL/AmazonLinux)
+- name: "Install Splunk Forwarder for CentOS/RHEL/AmazonLinux"
+  yum:
+    name: /opt/splunkforwarder.rpm
+    state: present
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon" and
+        splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+  tags: splunk
+
+# First Splunk setup
+- name: "First Splunk Forwarder Setup"
+  shell: "/opt/splunkforwarder/bin/splunk start --accept-license --answer-yes --no-prompt --seed-passwd '{{ password_splunk }}'"
+  when: splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+  tags: splunk
+
+# Kill Splunk service
+- name: "Kill Splunk"
+  shell: "pkill splunkd"
+  when: splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+
+# Second Splunk setup
+- name: "Setup Splunk Forwarder for Deployment Server"
+  shell: "/opt/splunkforwarder/bin/splunk set deploy-poll 172.17.25.140:8089 -auth admin:'{{ password_splunk }}'"
+  when: splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+  tags: splunk
+
+# Copy Splunk service configuration to "/etc/systemd/system/splunk.service"
+- name: "Set Configuration for Splunk Forwarder Service on destionation"
+  template:
+    src: splunk.service.j2
+    dest: /etc/systemd/system/splunk.service
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  when: splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+  tags: splunk
+
+# Enable Splunk service
+- name: "Enable Splunk Forward Service"
+  service:
+    name: splunk
+    enabled: yes
+  when: splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+  tags: splunk
+
+# Restart Splunk service
+- name: "Restart Splunk Forward Service"
+  service:
+    name: splunk
+    state: restarted
+  when: splunkfile.stat.exists == False and
+        inventory_hostname != "lnawusp002.ciandt.global"
+  tags: splunk

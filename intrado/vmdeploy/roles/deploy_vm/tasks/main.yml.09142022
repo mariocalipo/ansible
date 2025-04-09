@@ -1,0 +1,296 @@
+---
+- name: Gather variables
+  include_vars: 
+    file: '{{ vaultfile }}'
+
+- debug:
+    msg: "Hello {{ vcsuser }}"
+
+- name: Verify '{{ target_vm }}' doesn't already exists
+  vmware_guest_find: 
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    name: '{{ target_vm }}'
+  ignore_errors: true
+  register: vm_folder
+
+- debug:
+    msg: "vm_folder {{ vm_folder.folders }}"
+  when: vm_folder.failed == False
+
+- debug:
+    msg: "{{ target_vm }} not found"
+  when: vm_folder.failed == True
+
+- fail:
+    msg: "{{ target_vm }} already exists in {{ vm_folder.folders }}"
+  when: vm_folder.failed == False and target_folder in vm_folder.folders
+#when: vmfacts.instance.hw_folder == target_folder
+
+
+- name: Deploy 'single_nic {{ target_vm }} {{ ipaddr }} {{ netm }} {{ gw }}'
+  vmware_guest:
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    datacenter: '{{ target_dc }}'
+    cluster: '{{ target_cluster }}'
+    convert: '{{ target_disk_type | default(thin) }}'
+    name: '{{ target_vm }}'
+    template: '{{ target_vmtemplate }}'
+#    guest_id: 'rhel7_64Guest'
+    folder: '{{ target_folder }}'
+#    annotation: 'Created with Ansible using {{ template }}'
+    annotation: '{{ target_vmnotes }}'
+    datastore: '{{ datastorecluster }}'
+    disk:
+    - size_gb: '{{ target_disk_size }}'
+      type: '{{ target_disk_type | default(None) }}'
+    hardware:
+      num_cpus: '{{ cpus | default(2) }}'
+      memory_mb: '{{ mem | default(4096) }}'
+    networks:
+    - name: '{{ vlan }}'
+      ip: '{{ ipaddr }}'
+      netmask: '{{ netm }}'
+      gateway: '{{ gw }}'
+      type: static
+      device_type: vmxnet3
+    wait_for_ip_address: true
+    customization:
+        hostname: '{{ fqdn }}'
+#        domain: '{{ vdomain }}'
+        dns_servers:
+          - '{{ vdns1 }}'
+    state: poweredon
+  when: second_nic is not defined
+
+- name: Deploy 'dual_nic {{ target_vm }} {{ ipaddr }} {{ netm }} {{ gw }} {{ secipaddr }}'
+  vmware_guest:
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    datacenter: '{{ target_dc }}'
+    cluster: '{{ target_cluster }}'
+    convert: '{{ target_disk_type | default(thin) }}'
+    name: '{{ target_vm }}'
+    template: '{{ target_vmtemplate }}'
+    folder: '{{ target_folder }}'
+#    annotation: 'Created with Ansible using {{ template }}'
+    annotation: '{{ target_vmnotes }}'
+    datastore: '{{ datastorecluster }}'
+    disk:
+    - size_gb: '{{ target_disk_size }}'
+      type: '{{ target_disk_type | default(thin) }}'
+    hardware:
+      num_cpus: '{{ cpus | default(2) }}'
+      memory_mb: '{{ mem | default(4096) }}'
+    networks:
+    - name: '{{ vlan }}'
+      ip: '{{ ipaddr }}'
+      netmask: '{{ netm }}'
+      gateway: '{{ gw }}'
+      type: static
+      device_type: vmxnet3
+    - name: '{{ secvlan }}'
+      ip: '{{ secipaddr }}'
+      netmask: '{{ secnetm }}'
+      type: static
+      device_type: vmxnet3
+    wait_for_ip_address: true
+    customization:
+        hostname: '{{ fqdn }}'
+#        domain: '{{ vdomain }}'
+        dns_servers:
+          - '{{ vdns1 }}'
+    state: poweredon
+  when: second_nic is defined
+
+- name: Get facts for '{{ target_vm }}'
+  vmware_guest_info:
+      datacenter: '{{ target_dc }}'
+      folder: '{{ target_folder }}'
+      hostname: '{{ vcenterserver }}'
+      username: '{{ vcsuser }}'
+      password: '{{ vcsuserpass }}'
+      validate_certs: no
+      name: '{{ target_vm }}'
+  register: vmfacts
+
+- name: Add additional disks if needed
+  vmware_guest_disk:
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    datacenter: '{{ target_dc }}'
+    uuid: '{{ vmfacts.instance.hw_product_uuid }}'
+    disk:
+    - size_gb: '{{ item.size }}'
+      type: '{{ item.type | default(thin) }}'
+      unit_number: '{{ item.unitno }}'
+      scsi_controller: '{{ item.scsico }}'
+      datastore: '{{ vmfacts.instance.hw_datastores[0] }}'
+  with_items: '{{ target_disks }}'
+  when: target_disks is defined and clonedavm is not defined
+
+- name: Add networks if needed
+  vmware_guest_network:
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    datacenter: '{{ target_dc }}'
+    uuid: '{{ vmfacts.instance.hw_product_uuid }}'
+    networks:
+    - name: '{{ item.vlan }}'
+      ip: '{{ item.ipaddr }}'
+      netmask: '{{ item.netmask }}'
+      dvswitch_name: '{{ item.dvsn | default(omit) }}'
+      connected: True
+      force: True
+      start_connected: True
+      type: static
+      device_type: vmxnet3
+      state: new
+  loop: '{{ target_networks }}'
+  register: network_info
+  when: target_networks is defined and clonedavm is not defined and item.ipaddr != 'nobuild'
+
+- debug:
+    msg: "{{ network_info }}"
+
+#- debug:
+#    var: network_info.results[-1].network_info
+
+- name: create nwinfo
+  set_fact: 
+      nwinfo: []
+
+#- name: load nwinfo
+#  set_fact:
+#      nwinfo: '{{ nwinfo + [ { "ipaddy" : item.item.ipaddr, 
+#                               "netmask" : item.item.netmask,
+#                               "macaddr" : item.network_data[item.network_data.keys()[-1]].mac_addr|lower , 
+#                               "pgname" : item.network_data[item.network_data.keys()[-1]].name } ] }}'
+#  loop: "{{ network_info.results }}"
+#  when: not ( item.skipped is defined and item.skipped == True )
+
+- name: load nwinfo
+  set_fact:
+      nwinfo: '{{ nwinfo + [ { "ipaddy" : item[0].item.ipaddr, 
+                               "netmask" : item[0].item.netmask,
+                               "macaddr" : item[0].network_data[item[1]].mac_addr|lower , 
+                               "pgname" : item[0].network_data[item[1]].name } ] }}'
+  with_nested: 
+    - "{{ network_info.results }}"
+    - "{{ item[0].network_data.keys() }}"
+  when: not ( item[0].skipped is defined and item[0].skipped == True )
+
+# and item[0].network_data[item[1]].name == item[0].item.vlan
+
+- debug:
+    var: nwinfo
+
+
+- name: wait for a few
+  local_action:
+    module: ansible.builtin.pause
+    seconds: 15
+
+#### vmsosinfo
+- name: gather the facts
+  setup:
+  delegate_facts: yes
+  delegate_to: '{{ target_vm }}'
+  connection: ssh
+ #   ignore_errors: true
+  ignore_unreachable: true
+  become: true
+  vars:
+      ansible_python_interpreter: /usr/bin/python2
+  register: vmsos
+
+- debug:
+      var: vmsos['ansible_facts']['ansible_%-s'|format(item)]['macaddress']
+  loop: "{{ vmsos.ansible_facts.ansible_interfaces }}"
+
+- name: create ifaceinfo
+  set_fact: 
+      ifaceinfo: {}
+
+- name: load ifaceinfo
+  set_fact:
+      ifaceinfo: "{{ ifaceinfo|default({}) | combine( { vmsos['ansible_facts']['ansible_%-s'|format(item)]['macaddress']|lower: item } ) }}"
+  loop: "{{ vmsos.ansible_facts.ansible_interfaces }}"
+  when: item != 'lo'
+
+- debug:
+      var: ifaceinfo
+
+#- name: Delete garbage connections
+#  community.general.nmcli:
+#    conn_name: '{{ item.conn_name }}'
+#    state: absent
+#    with_items:
+#      - conn_name: 'Wired 
+#      - conn_name: em2
+#      - conn_name: p1p1
+#      - conn_name: p1p2
+#      - conn_name: p2p1
+#      - conn_name: p2p2
+#
+- name: Configure Extra Network Interface
+  nmcli:
+    type: ethernet
+    conn_name: '{{ ifaceinfo[item.macaddr] }}'
+    ifname: '{{ ifaceinfo[item.macaddr] }}'
+#    ip4: "{{ item.ipaddy }}/" + "{{ item.ipaddy }} + {{ item.netmask }}|ipaddr('prefix')"
+    ip4: "{{ item.ipaddy }}/{{ '%-s/%-s'|format(item.ipaddy,item.netmask)|ipaddr('prefix') }}"
+    method6: ignore
+    state: present
+  loop: "{{ nwinfo }}"
+  become: true
+  connection: ssh
+  vars:
+      ansible_python_interpreter: /usr/bin/python2
+  when: item.ipaddy != 'nobuild' and item.ipaddy != 'noip' and ifaceinfo[item.macaddr] is defined
+
+- fail: 
+    msg: 'stop here'
+
+
+
+- name: Setup RHEL server '{{ target_vm }}'
+  local_action:
+    module: vmware_vm_shell
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    datacenter: '{{ target_dc }}'
+    vm_id: '{{ target_vm }}'
+    vm_username: '{{ installerid }}'
+    vm_password: '{{ installerpass }}'
+    vm_shell: /bin/bash
+    vm_shell_args: |
+        -c
+        exec > /root/runme.output 2>&1
+        if [[ ! -f /root/.builtbyansible ]]; then
+        /bin/echo 'Ansible is awesome!' >> /root/.builtbyansible;
+        /bin/echo '{{ unixsvc_key }}' >> /home/unixsvc/.ssh/authorized_keys;
+        hostnamectl set-hostname '{{ fqdn }}' > /dev/null 2>&1 || /bin/sed -i -e's/HOSTNAME=.*$/HOSTNAME={{ fqdn }}/' /etc/sysconfig/network;
+        rm -f /root/techops.stub;
+        touch .rebootme;
+        else
+        /bin/echo 'not running' >> /root/techops.out;
+        fi
+    vm_shell_env:
+      - 'PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin'
+      - 'FQDN={{ fqdn }}'
+    vm_shell_cwd: "/root"
+    wait_for_process: yes

@@ -1,0 +1,4 @@
+license_key: '{{newrelic_license_key}}'
+log_file: /var/log/newrelic-infra/newrelic-infra.log
+verbose: 0
+enable_process_metrics: true

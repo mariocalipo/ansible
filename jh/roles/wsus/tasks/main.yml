@@ -1,0 +1,8 @@
+- name: install_wsus_feature.yml
+  ansible.builtin.import_tasks: install_wsus_feature.yml
+
+- name: configure_wsus.yml
+  ansible.builtin.import_tasks: configure_wsus.yml
+
+- name: configure_wsus_app_pool.yml
+  ansible.builtin.import_tasks: configure_wsus_app_pool.yml

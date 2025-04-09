@@ -1,0 +1,25 @@
+---
+- name: Install Octopus Tentacles
+  hosts: "{{target|default('localhost')}}"
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: kerberos
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_port: 5986
+    ansible_winrm_scheme: https
+  tasks:
+    - name: Get info for Octopus Service
+      ansible.windows.win_service_info:
+        name: "OctopusDeploy Tentacle: Polling"
+      register: octopus_service
+
+    - name: Install Octopus Tentacle
+      ansible.builtin.include_role:
+        name: windows
+        tasks_from: install_polling_tentacle.yml
+      when: not octopus_service.exists
+
+    - name: Octopus Already Running
+      debug:
+        msg: "Octopus service is already running. Please deregister tentacle and remove service before installing"
+      when: octopus_service.exists

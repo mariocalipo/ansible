@@ -1,0 +1,49 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Hardening playbook
+# Author: marioc@ciandt.com
+
+# Create admin group
+- name: Adding admin group
+  group:
+    name: admin
+    system: yes
+    state: present
+  tags: ss_users
+
+# Create users from item user (vars file)
+- name: Creating User Accounts"
+  user: 
+    name: "{{ item.username }}"
+    groups: "admin"
+    shell: /bin/bash
+  with_items: "{{ users }}"
+  tags: ss_users
+
+# Unlock users
+- name: "Unlock Users"
+  shell: usermod -p "*" {{ item.username }}
+  become: true
+  with_items: "{{ users }}"
+  tags: ss_users
+
+# Set each user key
+- name: "Set authorized key in file/"
+  authorized_key:
+    user: "{{item.username}}"
+    key: "{{ lookup('file', './files/{{ item.username}}.pub')}}"
+  with_items: "{{ users }}"
+  tags: ss_users
+
+# Configure admin group passwordless option to sudo
+- name: Allow 'admin' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%admin'
+    line: '%admin ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+  tags: ss_users

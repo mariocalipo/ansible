@@ -1,0 +1,27 @@
+###
+# Playbook: Apply named update from WSUS to target machines
+#
+#
+###
+
+---
+- name: Apply Windows Update by Title
+  hosts: "{{ target }}"
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: kerberos
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_port: 5986
+    ansible_winrm_scheme: https
+  tasks:
+    - name: Call Install-WindowsUpdate
+      ansible.windows.win_powershell:
+        script: "Install-WindowsUpdate -AcceptAll -Title '{{ update_title }}' {{ reboot_strategy }}"
+      register: install_windowsupdate
+      become: true
+      become_method: runas
+      become_user: SYSTEM
+
+    - name: Display result
+      debug:
+        var: install_windowsupdate.host_out

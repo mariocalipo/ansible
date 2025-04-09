@@ -1,0 +1,25 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Playbook: Snow
+# Author: marioc@ciandt.com
+
+# Look for devices inside "compliance" tag
+- hosts: compliance
+  become: yes
+  become_user: root
+
+  vars: 
+  - name: aws_access_key
+    private: no
+    unsafe: no
+
+  - name: aws_secret_key
+    private: no
+    unsafe: no
+
+# Look for "snowpack" role
+  roles:
+    - snowpack

@@ -1,0 +1,101 @@
+# Set download directory by OS type
+- name: Set download directory (WIN)
+  ansible.builtin.set_fact:
+    agent_dl_dir: "{{ drives.data | default('C', true) }}:\\tools"
+  when: ansible_os_family == "Windows"
+
+- name: Set download directory (Linux)
+  ansible.builtin.set_fact:
+    agent_dl_dir: /tmp/tools
+  when: not ansible_os_family == "Windows"
+
+# Ensure tools dir exists
+- name: Create tools directory (WIN)
+  ansible.windows.win_file:
+    path: "{{ agent_dl_dir }}"
+    state: directory
+  when: ansible_os_family == "Windows"
+
+- name: Create tools directory (Linux)
+  ansible.builtin.file:
+    path: "{{ agent_dl_dir }}"
+    state: directory
+    mode: '0755'
+  when: not ansible_os_family == "Windows"
+
+# Download Agent
+
+## Linux deb
+- name: Download cybereason cloud agent (Debian)
+  ansible.builtin.shell: |
+    gsutil cp {{ agents.cybereason.linux_deb_gcs_uri }} {{ agent_dl_dir }}/cybereason.deb
+  args:
+    creates: "{{ agent_dl_dir }}/cybereason.deb"
+  when: ansible_os_family == "Debian"
+
+## Linux rpm
+- name: Download cybereason cloud agent (RedHat)
+  ansible.builtin.shell: |
+    gsutil cp {{ agents.cybereason.linux_rpm_gcs_uri }} {{ agent_dl_dir }}/cybereason.rpm
+  args:
+    creates: "{{ agent_dl_dir }}/cybereason.rpm"
+  when: ansible_os_family == "RedHat"
+
+## Windows
+- name: Download cybereason cloud agent (Windows)
+  ansible.windows.win_shell: |
+    gsutil cp {{ agents.cybereason.windows_gcs_uri }} {{ agent_dl_dir }}\\cybereason.exe
+  args:
+    creates: "{{ agent_dl_dir }}\\cybereason.exe"
+    chdir: C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin
+  when: ansible_os_family == "Windows"
+
+# Install Agent
+
+## Windows
+- name: Install cybereason on Windows
+  when: ansible_os_family == "Windows"
+  block:
+    - name: Remove Windows Defender
+      ansible.windows.win_feature:
+        name:
+          - Windows-Defender
+        state: absent
+
+    - name: Install cybereason
+      ansible.windows.win_shell: |
+        ./cybereason.exe /install /quiet /norestart
+      args:
+        chdir: "{{ agent_dl_dir }}"
+        creates: "C:\\Program Files\\Cybereason ActiveProbe\\CybereasonAV.exe"
+
+- name: When not on windows
+  when: not ansible_os_family == "Windows"
+  block:
+
+    - name: Return service state information as fact data
+      ansible.builtin.service_facts:
+
+    ## Debian
+    - name: Install cybereason on Debian
+      when: ansible_os_family == "Debian"
+      block:
+
+        - name: Get stats unit file
+          ansible.builtin.stat:
+            path: /etc/systemd/system/cybereason-sensor.service
+          register: st
+
+        - name: Install cybereason .deb package
+          ansible.builtin.apt:
+            deb: "{{ agent_dl_dir }}/cybereason.deb"
+          when: not st.stat.exists
+
+        - name: Enable and start service cybereason
+          ansible.builtin.service:
+            name: cybereason-sensor.service
+            enabled: true
+            state: started
+
+# TODO
+# 1. Add linux install steps for redhat

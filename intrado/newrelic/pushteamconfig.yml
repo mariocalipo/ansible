@@ -1,0 +1,30 @@
+---
+- name: Push team config file
+  hosts: all
+  become: true
+#  vars:
+#    appteamcfg: 'voice.yml'
+  tasks:
+  - name: Check if newrelic-infra.yaml exists to see if newrelic is already installed
+    stat:
+      path: "/etc/newrelic-infra.yml"
+    register: stat_yaml
+
+  - name: Fail if newrelic is not installed
+    fail: 
+        msg: "Newrelic is not installed here!"
+    when: stat_yaml.stat.exists == False
+
+  - name: copy the app team config to target if specified
+    copy: 
+      dest: "/etc/newrelic-infra/logging.d/{{ appteamcfg }}"
+      src: "files/{{ appteamcfg }}"
+    when: appteamcfg is defined
+    notify: restart newrelic
+
+  handlers:
+  - name: restart newrelic
+    service:
+      name: 'newrelic-infra'
+      state: restarted
+

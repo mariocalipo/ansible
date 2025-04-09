@@ -1,0 +1,42 @@
+---
+- name: Copy intrado tarball to remote server
+  copy:
+      src: files/intrado.tar.gz
+      dest: /opt/intrado.tar.gz
+      
+- name: Unpack intrado framework archive
+  unarchive:
+      src: /opt/intrado.tar.gz
+      dest: /opt
+      owner: unixsvc
+      group: sysadmin
+      creates: /opt/intrado
+      validate_certs: no
+      remote_src: true
+
+- name: Running chksys - this may take some time - logs written to /opt/intrado/var
+  shell: "( /opt/intrado/bin/chksys > /opt/intrado/var/chksys.log 2>&1 )"
+  ignore_errors: true
+
+- name: Setup cfg2html
+  unarchive:
+      src: /opt/intrado/install/cfg2html/cfghtml.linux.tar
+      dest: /opt/intrado
+      owner: unixsvc
+      group: sysadmin
+      creates: /opt/intrado/cfghtml
+      validate_certs: no
+      remote_src: true
+
+- name: Running cfg2html - this may take some time - logs written to /opt/intrado/var
+  shell: "( cd /opt/intrado/cfghtml; nohup ./cfg2html > /opt/intrado/var/cfg2html.log 2>&1 )"
+  ignore_errors: true
+
+- name: Set up roots cron to run the intrado framework
+  copy:
+      src: files/rootcron
+      dest: /var/spool/cron/root
+      owner: root
+      group: root
+      mode: 0600
+

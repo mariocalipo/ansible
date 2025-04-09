@@ -1,0 +1,63 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Compliance playbook
+# Author: marioc@ciandt.com
+
+# Check if NTP is installed, if not, install it (CentOS/RHEL/AmazonLinux)
+- name: "Check if NTP is installed. If not, install it on CentOS/RHEL/AmazonLinux"
+  yum:
+    name: ntp
+    state: present
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon"
+  tags: ntp
+
+# Check if NTP is installed, if not, install it (Ubuntu)
+- name: "Check if NTP is installed. If not, install it on Ubuntu"
+  apt:
+    name: ntp
+    state: present
+  when: ansible_facts['distribution']=="Ubuntu"
+  tags: ntp
+
+# Copy NTP template to configure service
+- name: "Make sure ntp is configured"
+  template:
+    src: ntp.conf.j2
+    dest: /etc/ntp.conf
+  tags: ntp
+
+# Make sure NTP is started and enabled (Ubuntu)
+- name: "Make sure ntp is started, and is enabled on restart on Ubuntu"
+  service:
+    name: ntp
+    state: started
+    enabled: yes
+  when: ansible_facts['distribution']=="Ubuntu"
+  tags: ntp
+
+# Make sure NTP is started and enabled (CentOS/RHEL/AmazonLinux)
+- name: "Make sure ntpd is started, and is enabled on restart on CentOS/RHEL/AmazonLinux"
+  service:
+    name: ntpd
+    state: started
+    enabled: yes
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon"
+  tags: ntp
+
+# Set NTP timezone to São Paulo
+- name: "Set timezone to Sao_Paolo"
+  timezone:
+    name: America/Sao_Paulo
+
+# Restart rsyslog service to set logs to right time
+- name: Reload service rsyslog, in all cases
+  service:
+    name: rsyslog
+    state: restarted

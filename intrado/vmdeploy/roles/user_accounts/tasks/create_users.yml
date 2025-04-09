@@ -1,0 +1,74 @@
+# Create Group/Users tasks
+---
+- name: create group
+  group:
+    name="{{ugroup}}"
+    state=present
+  when: ugroup is defined
+
+- name: create users in a group
+  user:
+    name: "{{item.uname}}"
+    comment: "{{item.gecos}}"
+    groups: "{{ugroup}}"
+    append: yes
+    shell: "{{item.shell}}"
+    password: "{{item.passwd}}"
+    update_password: on_create
+    state: present
+  with_items: "{{users}}"
+  register: results
+  when: ugroup is defined
+
+- name: force password change
+  command: chage -d0 "{{ item.name }}"
+  with_items: "{{ results.results }}"
+  when: item.changed
+  
+- name: create users with no group
+  user:
+    name: "{{item.uname}}"
+    comment: "{{item.gecos}}"
+    shell: "{{item.shell}}"
+    password: "{{item.passwd}}"
+    update_password: on_create
+    state: present
+  with_items: "{{users}}"
+  register: results
+  when: ugroup is not defined
+
+- name: force password change
+  command: chage -d0 "{{ item.name }}"
+  with_items: "{{ results.results }}"
+  when: item.changed
+
+- name: create .ssh directories for new users
+  file:
+    path: "/home/{{item.uname}}/.ssh"
+    state: directory
+    owner: "{{item.uname}}"
+    group: "{{item.uname}}"
+    mode: 0700
+  with_items: "{{user_keys}}"
+  when: user_keys > 0
+
+- name: copy authorized_keys file
+  copy:
+    owner: "{{item.uname}}"
+    group: "{{item.uname}}"
+    mode: 0600
+    src: "{{item.key}}"
+    dest: "/home/{{item.uname}}/.ssh/authorized_keys"
+  with_items: "{{user_keys}}"
+  when: user_keys > 0
+
+- name: copy profile
+  copy:
+    owner: "{{item.uname}}"
+    group: "{{item.uname}}"
+    mode: 0600
+    src: "{{item.profile}}"
+    dest: "/home/{{item.uname}}/{{item.profile_name}}"
+  with_items: "{{user_profile}}"
+  when: user_profile > 0
+

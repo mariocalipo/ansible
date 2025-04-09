@@ -1,0 +1,70 @@
+# Create Group/Users tasks
+---
+- name: include the files
+  include_vars:
+    dir: 'vars'
+
+- name: create group
+  group:
+    name="{{ugroup}}"
+    state=present
+  become: true
+  when: ugroup is defined
+
+- name: append lab users to users when labenv is defined
+  set_fact:
+    users: "{{ users + labusers }}"
+  when: labenv is defined
+
+- name: create users in a group
+  user:
+    name: "{{item.uname}}"
+    comment: "{{item.gecos}}"
+    groups: "{{ugroup}}"
+    append: yes
+    shell: "{{item.shell}}"
+    password: "{{item.passwd}}"
+    update_password: on_create
+    state: present
+  with_items: "{{users}}"
+  become: true
+  register: results
+  when: ugroup is defined
+
+#- name: force password change
+#  command: chage -d0 "{{ item.name }}"
+#  with_items: "{{ results.results }}"
+#  when: item.changed
+  
+- name: create .ssh directories for new users
+  file:
+    path: "/home/{{item.uname}}/.ssh"
+    state: directory
+    owner: "{{item.uname}}"
+    group: "{{item.uname}}"
+    mode: 0700
+  with_items: "{{user_keys}}"
+  become: true
+  when: user_keys is defined and user_keys > 0
+
+- name: copy authorized_keys file
+  copy:
+    owner: "{{item.uname}}"
+    group: "{{item.uname}}"
+    mode: 0600
+    src: "{{item.key}}"
+    dest: "/home/{{item.uname}}/.ssh/authorized_keys"
+  with_items: "{{user_keys}}"
+  become: true
+  when: user_keys is defined and user_keys > 0
+
+- name: copy profile
+  copy:
+    owner: "{{item.uname}}"
+    group: "{{item.uname}}"
+    mode: 0600
+    src: "{{item.profile}}"
+    dest: "/home/{{item.uname}}/{{item.profile_name}}"
+  with_items: "{{user_profile}}"
+  become: true
+  when: user_profile is defined and user_profile > 0

@@ -1,0 +1,21 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Playbook: Generate User RSA Key
+# Author: marioc@ciandt.com
+
+# Look for Rundeck
+- hosts: rundeck
+  become: yes
+  become_user: root
+
+# Configure "username" variable
+  vars:
+    - name: sskeys
+      private: no
+
+# Look for "linux_create_user_ss" role
+  roles:
+    - generate_user_rsa_key

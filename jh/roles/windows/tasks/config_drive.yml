@@ -1,0 +1,12 @@
+- name: Get disk facts
+  community.windows.win_disk_facts:
+    filter:
+      - physical_disk
+
+- name: Configure each drive
+  ansible.builtin.include_tasks: config_volume.yml
+  loop: '{{ ansible_facts.disks }}'
+  when:
+    - not item.system_disk
+    - not item.bus_type == "NVMe"
+    - not item.bus_type == "Spaces"

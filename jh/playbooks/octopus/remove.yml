@@ -1,0 +1,43 @@
+---
+- name: Remove Octopus Tentacles
+  hosts: "{{target|default('localhost')}}"
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: kerberos
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_port: 5986
+    ansible_winrm_scheme: https
+  tasks:
+    - name: Retrieve octopus api key from Google Secret Manager
+      ansible.windows.win_shell: |
+        gcloud secrets versions access latest --secret="octopus-tentacle-api"
+      register: octopus_tentacle_api_key
+      no_log: true
+      changed_when: octopus_tentacle_api_key.rc != 0
+
+    - name: Deregister
+      ansible.windows.win_powershell:
+        script: |
+          & "C:\Program Files\Octopus Deploy\Tentacle\Tentacle.exe" deregister-from --instance "Tentacle" --server="{{ agents.octopus.uri }}" --apiKey="{{ octopus_tentacle_api_key.stdout }}" --multiple
+          & "C:\Program Files\Octopus Deploy\Tentacle\Tentacle.exe" deregister-from --instance "Polling" --server="{{ agents.octopus.uri }}" --apiKey="{{ octopus_tentacle_api_key.stdout }}" --multiple
+
+    - name: Deregister
+      ansible.windows.win_powershell:
+        script: |
+          & "C:\Program Files\Octopus Deploy\Tentacle\Tentacle.exe" delete-instance --instance "Tentacle"
+          & "C:\Program Files\Octopus Deploy\Tentacle\Tentacle.exe" delete-instance --instance "Polling"
+
+    - name: Remove OctopusDeploy Tentacle
+      ansible.windows.win_service:
+        name: "OctopusDeploy Tentacle"
+        state: absent
+
+    - name: Remove OctopusDeploy Polling Tentacle
+      ansible.windows.win_service:
+        name: "OctopusDeploy Tentacle: Polling"
+        state: absent
+
+    - name: Burn it all down
+      ansible.windows.win_file:
+        path: "{{ drives.data }}:\\Octopus\\Tentacle.config"
+        state: absent

@@ -1,0 +1,46 @@
+---
+- hosts: all
+  become: true
+  vars:
+  tasks:
+  - name: check sudoers for IEN Command Aliases
+    shell: 'grep IEN /etc/sudoers | grep Cmnd_Alias | wc -l'
+    register: results
+    
+#       Cmnd_Alias      IENCHKCFG = /sbin/chkconfig elx * \
+#                                   /sbin/chkconfig elxmonitor * \
+#                                   /sbin/chkconfig mp * \
+#                                   /sbin/chkconfig cmp * \
+#                                   /sbin/chkconfig mop * \
+#                                   /sbin/chkconfig tsf * \
+#                                   /sbin/chkconfig jradiusd * \
+#                                   /sbin/chkconfig syslogd * \
+#                                   /sbin/chkconfig pac * \
+#                                   /sbin/chkconfig vsd-instance * \
+#                                   /sbin/chkconfig nodemanager *
+  - name: update sudoers with command aliases
+    blockinfile:
+      path: /etc/sudoers
+      block: |
+       Cmnd_Alias      IENCHKCFG = /sbin/chkconfig elx *, /sbin/service elx *, /etc/init.d/elx, \
+                                   /sbin/chkconfig elxmonitor *, /sbin/service elxmonitor *, /etc/init.d/elxmonitor, \
+                                   /sbin/chkconfig nodemanager *, /sbin/service nodemanager *, /etc/init.d/nodemanager, \
+                                   /bin/systemctl stop newrelic-infra, \
+                                   /bin/systemctl status newrelic-infra, \
+                                   /bin/systemctl start newrelic-infra, \
+                                   sudoedit /etc/newrelic-infra/logging.d/voice.yml
+       Cmnd_Alias      IENSU = /bin/su - ienvoice, /bin/su ienvoice
+       Cmnd_Alias      TCPDUMP = /usr/bin/tcpdump
+      insertafter: '^Cmnd_Alias.*TMPSU'
+      backup: true
+      marker: "## {mark} ANSIBLE MANAGED BLOCK ##"
+    when: results.stdout|int < 1
+
+
+  - name: add group perms for ienvadms to sudoers
+    lineinfile:
+      path: /etc/sudoers
+      line: '%ienvadms          ALL = IENSU, IENCHKCFG, TCPDUMP'
+      regexp: '^%ienvadms.*'
+      insertafter: '^%tmproot'
+      backup: true

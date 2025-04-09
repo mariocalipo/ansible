@@ -1,0 +1,75 @@
+##
+## This will add sudo rules to a system for the application team to manage newrelic logging.
+## 
+## This does not add rules for logstash, although a version could be done for that too
+##
+## You must pass the name of the config file and the name of the team
+## For most teams, the team name is the same as the config file name, but in some cases its not.
+## Legacy voice systems have tladmins as the sudo group for the app team, but the config would be voice.
+##
+## team                 config
+## i3team               i3team
+## voice                voice
+## tladmins             voice
+## webapps              webapps
+## mobility             mobility
+## dbadmins             dbadmins
+##
+## You must make sure that you are running this against the right group name.
+## Maybe later I will create a switch statement to work it, but for now this is it
+## 
+## Example:
+## $ ansible-playbook  -i alde0euasfmst1, -e"appteam=clowns" -e"appteamcfg=clowncfg" addsudorules.yml
+
+---
+- hosts: all
+  become: true
+  vars:
+    #appteam: voice
+    #appteamcfg: voice
+    sudofile: /etc/sudoers
+  tasks:
+  - name: Check for IDM
+    shell: 
+        cmd: 'grep -i unixidm /etc/krb5.conf | wc -l'
+    register: stat_result
+
+  - name: fail if system has IDM
+    fail: 
+        msg: 'System managed by RHEL IDM. Add rules via IDM'
+    when: stat_result.stdout|int > 0 
+
+  - name: check sudoers for newrelic logging commands
+    shell: 'grep newrelic-infra {{ sudofile }} | grep Cmnd_Alias | wc -l'
+    register: results
+    
+  - name: update sudoers with command aliases
+    lineinfile:
+      path: '{{ sudofile }}'
+      line: 'Cmnd_Alias      NRCMDS = /bin/systemctl stop newrelic-infra,/bin/systemctl status newrelic-infra,/bin/systemctl start newrelic-infra,/bin/systemctl restart newrelic-infra,/sbin/service newrelic-infra *,sudoedit /etc/newrelic-infra/logging.d/{{ appteamcfg }}.yml'
+      insertafter: '^Cmnd_Alias.*TMPSU'
+      backup: true
+    when: results.stdout|int < 1
+    register: ruleadded
+
+  - name: check sudoers for appteam entry
+    shell: "grep '^%{{ appteam }}' {{ sudofile }} |  wc -l"
+    register: aptresults
+    
+  - name: add group perms for newrelic when group rules exist
+    lineinfile:
+      backrefs: yes
+      path: '{{ sudofile }}'
+      line: '%{{ appteam }}\1, NRCMDS'
+      regexp: '^%{{ appteam }}(.*)$'
+      insertafter: '^%tmproot'
+      backup: true
+    when: aptresults.stdout|int > 0 and ruleadded is defined and ruleadded.changed == True
+
+  - name: add group perms for newrelic when no group exists
+    lineinfile:
+      path: '{{ sudofile }}'
+      line: '%{{ appteam }}          ALL = NRCMDS'
+      insertafter: '^%tmproot'
+      backup: true
+    when: aptresults.stdout|int < 1 and ruleadded is defined and ruleadded.changed == True

@@ -1,0 +1,25 @@
+plugin: gcp_compute
+projects:
+  - prod-lendsoln-lv-mod
+zones:
+  - us-central1-a
+  - us-central1-b
+  - us-central1-c
+  - us-central1-f
+filters:
+  - status = RUNNING
+  - scheduling.automaticRestart = true AND status = RUNNING
+  - 'name = uat*'
+keyed_groups:
+  - key: labels
+groups:
+  is: "'product' in (labels|list)"
+hostnames:
+  - name
+retrieve_image_info: true
+name_suffix: ".lendsolnlv.local"
+auth_kind: application
+compose:
+  environment_type: "'uat'"
+  active_directory_domain_full: "'lendsolnlv.local'"
+  active_directory_domain_short: "'LENDSOLNLV'"

@@ -1,0 +1,12 @@
+users2add:
+- {uname: "eitsnowp", uid: 552, gid: 552, gecos: "Service-Now Discovery Account,mdbo.safetyservices@west.com", shell: "/bin/bash", kfile: "files/eitsnowp.pub"}
+sudofile: "/etc/sudoers"
+usudocmds:
+- { binchk: 'dmidecode', binargs: '' }
+- { binchk: 'fdisk', binargs: ' -l' }
+- { binchk: 'multipath', binargs: ' -ll' }
+- { binchk: 'dmsetup', binargs: ' ls' }
+- { binchk: 'dmsetup', binargs: ' table *' }
+- { binchk: 'lsof', binargs: '' }
+  
+usudocmda:

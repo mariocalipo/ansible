@@ -1,0 +1,21 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Hardening playbook
+# Author: marioc@ciandt.com
+
+# Import below tasks
+- import_tasks: hostname.yml
+- import_tasks: update.yml
+- import_tasks: snmp.yml
+- import_tasks: add_secops_and_security_ss_users.yml
+- import_tasks: add_sa_tempest_user.yml
+- import_tasks: splunk.yml
+- import_tasks: desktopcentral.yml
+- import_tasks: deepsecurity.yml
+- import_tasks: sshd.yml
+- import_tasks: ntp.yml
+- import_tasks: snow.yml
+- import_tasks: cortexxdr.yml

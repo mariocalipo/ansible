@@ -1,0 +1,14 @@
+---
+- name: Apply to Windows
+  hosts: "{{target|default('localhost')}}"
+  strategy: free
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: kerberos
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_port: 5986
+    ansible_winrm_scheme: https
+  tasks:
+    - name: Reboot a slow machine that might have lots of updates to apply
+      ansible.windows.win_reboot:
+        reboot_timeout: 3600

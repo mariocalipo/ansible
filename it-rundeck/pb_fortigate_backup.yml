@@ -1,0 +1,47 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Playbook: Fortigate Backup
+# Author: marioc@ciandt.com
+
+- hosts: fortigate
+  collections:
+  - fortinet.fortios
+  become: yes
+  become_user: root
+
+  vars: 
+    - name: password_op_sa_rundeck
+      private: no
+      unsafe: no
+    - name: fwbh_token
+      private: no
+      unsafe: no
+    - name: fwche_token
+      private: no
+      unsafe: no
+    - name: fwcps_token
+      private: no
+      unsafe: no
+    - name: fwctb_token
+      private: no
+      unsafe: no
+    - name: fwjp_token
+      private: no
+      unsafe: no
+    - name: fwngb_token
+      private: no
+      unsafe: no
+    - name: fwoak_token
+      private: no
+      unsafe: no
+    - name: fwctn_token
+      private: no
+      unsafe: no
+
+# Look for "fortigate_backup" role
+  roles:
+    - fortigate_backup
+  

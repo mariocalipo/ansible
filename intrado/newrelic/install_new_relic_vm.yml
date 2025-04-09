@@ -1,0 +1,68 @@
+---
+- name: Install New Relic VM monitor
+  hosts: all
+  become: true
+  vars:
+    new_relic_version: latest
+  tasks:
+  - name: Check if newrelic-infra.yml exists to see if newrelic is already installed
+    stat:
+      path: "/etc/newrelic-infra.yml"
+    register: stat_yaml
+
+  - name: Fail if newrelic is already installed
+    fail: 
+        msg: "Already installed"
+    when: stat_yaml.stat.exists == True  and ( forceit is not defined and forceit == True )
+
+  - name: test access to newrelic systems
+    wait_for:
+         host: "{{ item }}"
+         port: 443
+         timeout: 5
+    with_items:
+    - download.newrelic.com
+    - infra-api.newrelic.com
+    - identity-api.newrelic.com
+    - infrastructure-command-api.newrelic.com
+    - log-api.newrelic.com
+    - metric-api.newrelic.com
+
+  - name: create the answers file /etc/newrelic-infra.yml
+    template:
+      src: files/newrelic.yml
+      dest: /etc/newrelic-infra.yml
+
+  - name: Check if newrelic-infra.repo exists
+    stat:
+      path: "/etc/yum.repos.d/newrelic-infra.repo"
+    register: stat_repo
+
+  - name: Download newrelic-infra.repo
+    get_url:
+      url: "https://download.newrelic.com/infrastructure_agent/linux/yum/el/{{ ansible_distribution_major_version|int }}/x86_64/newrelic-infra.repo"
+      validate_certs: no
+      dest: "/etc/yum.repos.d/newrelic-infra.repo"
+      force: true
+      timeout: 600
+    when: stat_repo.stat.exists == False
+
+  - name: Install New Relic RPM 
+    yum:
+      name: newrelic-infra
+      state: "{{new_relic_version}}"
+      enablerepo: newrelic-infra
+      disablerepo: '*'
+
+  - name: copy appteamcfg to target if requested
+    copy: 
+      dest: "/etc/newrelic-infra/logging.d/{{ appteamcfg }}"
+      src: "files/{{ appteamcfg }}"
+    when: appteamcfg is defined
+    notify: restart newrelic
+
+  handlers:
+  - name: restart newrelic
+    service:
+      name: 'newrelic-infra'
+      state: restarted

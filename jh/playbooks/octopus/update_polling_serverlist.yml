@@ -1,0 +1,28 @@
+---
+- name: Update Octopus Polling Tentacle Server List
+  hosts: "{{target|default('localhost')}}"
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: kerberos
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_port: 5986
+    ansible_winrm_scheme: https
+  tasks:
+    - name: Retrieve octopus api key from Google Secret Manager
+      ansible.windows.win_shell: |
+        gcloud secrets versions access latest --secret="octopus-tentacle-api"
+      register: octopus_tentacle_api_key
+      no_log: true
+      changed_when: octopus_tentacle_api_key.rc != 0
+
+    - name: Update polling tentacle configuration
+      ansible.windows.win_powershell:
+        script: |
+          $tentacle = $env:COMPUTERNAME
+
+          $octopusAPIKey = "{{ octopus_tentacle_api_key.stdout }}"
+          $octopusURI2   = "{{ octopus_uri2 }}"
+
+          # Configure Tentacle
+          & "C:\Program Files\Octopus Deploy\Tentacle\Tentacle.exe" poll-server --server=$octopusURI2 --apiKey=$octopusAPIKey
+          & "C:\Program Files\Octopus Deploy\Tentacle\Tentacle.exe" service --instance "Polling" --stop --start

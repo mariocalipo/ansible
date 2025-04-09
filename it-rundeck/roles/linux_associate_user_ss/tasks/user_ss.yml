@@ -1,0 +1,46 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Create SS User playbook
+# Author: marioc@ciandt.com
+
+# Create admin group
+  - name: Adding admin group
+    group:
+      name: admin
+      system: yes
+      state: present
+
+# Create user account and add into admin group
+  - name: "Create user account"
+    user:
+      name: "{{ username }}"
+      groups: "admin"
+      shell: /bin/bash
+
+# Unlock user 
+  - name: "Unlock User"
+    shell: usermod -p "*" {{ username }}
+    become: true
+
+# Set user key  
+  - name: "Set authorized key in files/"
+    authorized_key:
+      user: "{{username}}"
+      key: "{{ lookup('file', '/ciandt/user_keys/{{ username}}.pub')}}"
+
+# Set admin group to sudo without password
+  - name: Allow 'admin' group to have passwordless sudo
+    lineinfile:
+      dest: /etc/sudoers
+      state: present
+      regexp: '^%admin'
+      line: '%admin ALL=(ALL) NOPASSWD: ALL'
+      validate: 'visudo -cf %s'
+
+# Show output
+  - name: "Output"
+    ansible.builtin.debug:
+      msg: '{{ username }} created with sudo privileges'

@@ -1,0 +1,27 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Generate User RSA Key playbook
+# Author: marioc@ciandt.com
+
+# Generate User RSA Key and Print the Output
+- name: "Generate User Keys"
+  #command: "ssh-keygen -t rsa -m PEM -N 'Czee9wY5rqs7DTAp' -C '{{ sskeys }}@mailrelay' -f {{ sskeys | quote }}"
+  command: "ssh-keygen -t rsa -m PEM -N 'Czee9wY5rqs7DTAp' -C '{{ sskeys }}@lnoncpp023' -f {{ sskeys | quote }}"
+  args:                                             
+    chdir: "/ciandt/user_keys/"
+    creates: "{{ sskeys }}"
+  
+#- name: "Output Private Key"
+#  command: "cat /ciandt/user_keys/{{ sskeys }}"
+#  register: private_key
+#- debug:
+#      var: private_key.stdout_lines
+
+- name: "Output Public Key"
+  command: "cat /ciandt/user_keys/{{ sskeys }}.pub"
+  register: public_key
+- debug:
+      var: public_key.stdout_lines

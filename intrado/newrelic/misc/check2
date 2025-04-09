@@ -1,0 +1,80 @@
+- name: add eitsnowp sudo entries
+  hosts: all
+  become: yes
+  become_method: sudo
+  become_user: root
+#  gather_facts: no
+  vars:
+    sudofile: "/etc/sudoers"
+    usudocmds:
+    - { binchk: 'dmidecode', binargs: '' }
+    - { binchk: 'fdisk', binargs: ' -l' }
+  
+    usudocmda:
+
+  tasks:
+    - name: Check for eitsnowp user
+      shell: "grep eitsnowp /etc/passwd | wc -l"
+      register: result
+
+    - name: Fail if eitsnowp user does not exist
+      fail:
+        msg: 'No eitsnowp user found'
+      when: result.stdout|int < 1
+ 
+    - name: create a backup copy of the sudoers file
+      copy:
+          src: /etc/sudoers
+          dest: '/root/sudoers.ansible.{{ ansible_date_time.epoch }}'
+          remote_src: true
+
+    - name: find paths
+      shell: "source /etc/profile;which {{ item.binchk }} 2>&1 | grep -v 'no {{ item.binchk }}'"
+      with_items: "{{ usudocmds }}"
+      register: path_results
+      ignore_errors: yes
+
+    - name: output info
+      debug: 
+        msg: '{{ item.stdout }}{{ item.item.binargs }}'
+        verbosity: 2
+      when: item.rc == 0
+      with_items: "{{ path_results.results }}"
+
+    - name: setup cmd aliases
+      set_fact:
+        usudocmda: "{{ usudocmda }}{{ item.stdout }}{{ item.item.binargs }}, "
+      when: item.rc == 0
+      with_items: "{{ path_results.results }}"
+
+    - name: remove eitsnowp CMDALIAS 
+      lineinfile:
+        dest: "{{ sudofile }}"
+        regexp: 'Cmnd_Alias\s+EITSNOWP_CMD.*$'
+        state: absent
+
+    - name: add eitsnowp CMDALIAS 
+      lineinfile:
+        dest: "{{ sudofile }}"
+        line: "Cmnd_Alias      EITSNOWP_CMD = {{ usudocmda | regex_replace(',\\s+$','') }}"
+        insertafter: '^Cmnd_Alias\s+TMPSU.*$'
+        state: present
+
+    - name: add eitsnowp sudo entry
+      lineinfile:
+        dest: "{{ sudofile }}"
+        line: 'eitsnowp	ALL = NOPASSWD: EITSNOWP_CMD'
+        insertafter: '^unixsvc'
+        state: present
+
+    - name: add /sbin and /usr/sbin to secure_path if secure_path not defined
+      lineinfile:
+        dest: "{{ sudofile }}"
+        line: 'Defaults	secure_path=/bin:/usr/bin:/sbin:/usr/sbin'
+        regexp: 'Defaults\s+secure_path'
+        insertafter: '^Defaults\s+group'
+        state: present
+
+#      shell: 'visudo -cf {{ sudofile }}'
+    - name: validate sudoers
+      shell: '/usr/sbin/visudo -cf {{ sudofile }} 2>/dev/null||/usr/local/sbin/visudo -cf {{ sudofile }} 2>/dev/null'

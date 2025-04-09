@@ -1,0 +1,28 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Variables from Linux Server Hardening playbook
+# Author: marioc@ciandt.com
+
+# Configure "username" variable
+users:
+  - username: "ss.master"
+  - username: "ss.csartori"
+  - username: "ss.fsanches"
+  - username: "ss.julianob"
+  - username: "ss.lbegnami"
+  - username: "ss.niltontetsuo"
+  - username: "ss.wlolato"
+  - username: "ss.adriano.gaspar"
+  - username: "ss.leonardo.oliveira"
+  - username: "ss.flavio.vidal"
+  - username: "ss.etoshio"
+  - username: "ss.fsato"
+  - username: "ss.thomass"
+  - username: "ss.fperes"
+  - username: "ss.leonardo.stati"
+
+# Configure "username_tempest" variable
+username_tempest: "sa_tempest"

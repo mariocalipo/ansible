@@ -1,0 +1,65 @@
+# Edureka Ansible Task from New Servers playbook
+# Author: Mario Calipo
+
+# Update packages
+  - name: Update the System Packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+
+# Install Default JDK
+  - name: Install JDK
+    apt:
+      name: default-jdk
+      state: present
+
+# Create Tomcat Group
+  - name: Create a Tomcat Group
+    group:
+      name: tomcat
+
+# Create Tomcat Directory
+  - name: Create a directory if it does not exist
+    file:
+      path: /opt/tomcat
+      state: directory
+      mode: '0755'
+
+# Create Tomcat User
+  - name: Create a Tomcat User
+    user:
+      name: tomcat
+      shell: /bin/false
+      groups: tomcat
+      home: /opt/tomcat
+
+# Download and Unarchive Tomcat
+  - name: Download & Unarchive Tomcat 
+    unarchive:
+      src: https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.31/bin/apache-tomcat-8.5.31.tar.gz
+      dest: /opt/tomcat
+      remote_src: yes
+      extra_opts: [--strip-components=1]
+
+# Change ownership of Tomcat directory
+  - name: Change ownership of tomcat directory
+    file:
+      path: /opt/tomcat
+      owner: tomcat
+      group: tomcat
+      mode: "u+rwx,g+rx,o=rx"
+      recurse: yes
+      state: directory
+
+# Copy Tomcat service from local to remote
+  - name: Copy Tomcat service from local to remote
+    template:
+      src: files/tomcat.service
+      dest: /etc/systemd/system/tomcat.service
+
+# Start and Enable Tomcat on sever
+  - name: Start and Enable Tomcat on sever
+    systemd:
+      name: tomcat
+      state: started
+      daemon_reload: true

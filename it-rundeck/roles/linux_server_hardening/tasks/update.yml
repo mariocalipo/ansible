@@ -1,0 +1,25 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Hardening playbook
+# Author: marioc@ciandt.com
+
+
+# Update (Ubuntu)
+- name: "Update and upgrade apt packages for Ubuntu"
+  apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400
+  when: ansible_facts['distribution']=="Ubuntu"
+  tags: apt
+
+# Update (CentOS/RHEL/AmazonLinux)
+- name: "Install updates for CentOS/RHEL/AmazonLinux"
+  yum: name=* state=latest
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon"
+  tags: yum

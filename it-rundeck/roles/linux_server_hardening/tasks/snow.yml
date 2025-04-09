@@ -1,0 +1,55 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Hardening playbook
+# Author: marioc@ciandt.com
+
+# Download Snow agent and store into /opt (Ubuntu)
+- name: "Download SNOW Agent from store.ciandt.com for Ubuntu"
+  get_url:
+    url: https://store.ciandt.com/apps/infra_hardening/snowagent.deb
+    dest: /opt/
+    owner: root
+    group: root
+    mode: u=rwx,g=rwx,o=r
+    headers: 
+      X-Token: HUEJEsgWQGAE4k7EUdGQvYba6uPRxsPsGXzT8RnHAE7JskB8nhwdM58dDCXFGf6U
+    validate_certs: no
+  when: ansible_facts['distribution']=="Ubuntu"
+  tags: snowagent
+
+# Install Snow agent (Debian/Ubuntu)
+- name: "Install SNOW Agent for Debian/Ubuntu System"
+  apt:
+    deb: /opt/snowagent.deb
+    state: present
+  when: ansible_facts['distribution']=="Ubuntu"
+  tags: snowagent
+
+# Download Snow agent and store into /opt (CentOS/RHEL/AmazonLinux)
+- name: "Download SNOW Agent from store.ciandt.com for CentOS/RHEL/AmazonLinux"
+  get_url:
+    url: https://store.ciandt.com/apps/infra_hardening/snowagent.rpm
+    dest: /opt/
+    owner: root
+    group: root
+    mode: u=rwx,g=rwx,o=r
+#    headers: 
+#      X-Token: HUEJEsgWQGAE4k7EUdGQvYba6uPRxsPsGXzT8RnHAE7JskB8nhwdM58dDCXFGf6U
+#    validate_certs: no
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon"
+  tags: snowagent
+
+# Install Snow agent (CentOS/RHEL/AmazonLinux)
+- name: "Install SNOW Agent for CentOS/RHEL/AmazonLinux"
+  yum:
+    name: /opt/snowagent.rpm
+    state: present
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon"
+  tags: snowagent

@@ -1,0 +1,2 @@
+[newservers]
+bts-reverse-proxy-jiracloud.ciandt.global ansible_host=172.17.7.47

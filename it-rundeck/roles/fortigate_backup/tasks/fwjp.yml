@@ -1,0 +1,50 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Fortigate Backup playbook
+# Author: marioc@ciandt.com
+
+- name: Backup Configuration
+  fortinet.fortios.fortios_monitor_fact:
+    selector: 'system_config_backup'
+    access_token: '{{ fwjp_token }}'
+    vdom: 'root'
+    params:
+      scope: 'global'
+  register: backup
+  when: prefix == "fwjp"
+
+- name: Save the backup information.
+  copy:
+   content: '{{ backup.meta.raw }}'
+   dest: "/tmp/{{ inventory_hostname }}_{{ '%F' | strftime }}.conf"
+  when: prefix == "fwjp"
+
+- name: Mount network share
+  mount:
+    src: //172.17.5.27/corp/ti
+    path: /mnt
+    fstype: cifs
+    opts: "username=op_sa_rundeck@op.ciandt.global,password={{ password_op_sa_rundeck }}"
+    state: mounted
+  when: prefix == "fwjp"
+
+- name: Ansible copy file
+  copy:
+    src: "/tmp/{{ inventory_hostname }}_{{ '%F' | strftime }}.conf"
+    dest: "/mnt/Fortinet/BackupFirewall/fwjp"
+  when: prefix == "fwjp"
+
+- name: Unmount network share
+  mount:
+    path: /mnt
+    state: absent
+  when: prefix == "fwjp"
+
+- name: Remove file
+  ansible.builtin.file:
+    path: "/tmp/{{ inventory_hostname }}_{{ '%F' | strftime }}.conf"
+    state: absent
+  when: prefix == "fwjp"

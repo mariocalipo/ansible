@@ -1,0 +1,192 @@
+---
+- name: find all mail files
+  find:
+      paths: /var/spool/mail
+      patterns: "*"
+  register: mailfiles
+
+- name: Change perms on mail files
+  file:
+      path: "{{ item.path }}"
+      mode: 0600 
+  with_items: "{{ mailfiles.files }}"
+
+- name: Update mail relay to mail.intrado.com
+  shell: |
+      cp /etc/mail/sendmail.mc /etc/mail/sendmail.mc.orig
+      echo "" >> /etc/mail/sendmail.mc
+      echo "dnl # Intrado Mail Relay" >> /etc/mail/sendmail.mc
+      echo "define(\`SMART_HOST', \`mail.intrado.com')" >> /etc/mail/sendmail.mc
+      make -C /etc/mail
+      chmod 444 /etc/mail/sendmail.cf
+      chown root:bin /etc/mail/sendmail.cf
+  args:
+      executable: /bin/bash
+      creates: /etc/mail/sendmail.mc.orig
+
+- name: secure /var/log/messages
+  file:
+      path: /var/log/messages
+      mode: 0640
+      group: sysadmin
+      state: touch
+
+- name: Update /etc/motd
+  copy: 
+      dest: /etc/motd
+      src: files/motd
+      owner: root
+      group: root
+      mode: 0644
+
+- name: Update /etc/issue
+  copy: 
+      dest: /etc/issue
+      src: files/motd
+      owner: root
+      group: root
+      mode: 0644
+
+- name: Update /etc/sshd_config
+  copy: 
+      dest: /etc/ssh/sshd_config
+      src: files/sshd_config
+      owner: root
+      group: root
+      mode: 0600
+
+- name: Update /etc/chrony.conf
+  copy: 
+      dest: /etc/chrony.conf
+      src: files/chrony.conf
+      owner: root
+      group: root
+      mode: 0644
+
+- name: Create directory for chronyd override
+  file:
+      path: /etc/systemd/system/chronyd.service.d
+      state: directory
+      owner: root
+      group: root
+      mode: 0755
+
+- name: Copy override config into place
+  copy:
+      src: "files/chronyd-override.conf"
+      dest: "/etc/systemd/system/chronyd.service.d/override.conf"
+  notify:
+    - reload systemd
+
+- name: flush handlers
+  meta: flush_handlers
+
+- name: Update default profile
+  lineinfile:
+      path: /etc/profile
+      line: umask 022
+
+- name: Update .bash_profile
+  lineinfile:
+      path: /etc/skel/.bash_profile
+      line: umask 022
+
+#- name: Add symlink for ksh
+#  file:
+#      src: /bin/ksh
+#      dest: /usr/bin/ksh
+#      state: link
+
+- name: Create cron.allow and at.allow file
+  lineinfile:
+      name: '{{ item[0] }}'
+      line: '{{ item[1] }}'
+      create: yes
+      owner: root
+      group: sys
+      mode: 0600
+      state: present
+  with_nested:
+      - [ '/etc/cron.allow', '/etc/at.allow' ]
+      - [ 'root', 'unixsvc' ]
+
+- name: Ensure that root is in /etc/ftpusers
+  lineinfile:
+      name: '/etc/ftpusers'
+      line: 'root'
+      create: yes
+      owner: root
+      group: sys
+      mode: 0600
+      state: present 
+
+- name: Ensure the three finger salute is disbled
+  systemd:
+      name: ctrl-alt-del.target
+      state: stopped
+      masked: yes
+      enabled: no
+
+- name: Copy /etc/rsyslog.d/ignore-systemd-session-slice.conf to host
+  copy:
+      src: files/ignore-systemd-session-slice.conf
+      dest: /etc/rsyslog.d/ignore-systemd-session-slice.conf
+      owner: root
+      group: root
+      mode: 0644
+
+
+- name: Update the grub configuration so that bootup is verbose
+  replace:
+      path: /etc/default/grub
+      regexp: '(^GRUB_CMDLINE_LINUX.*)rhgb quiet(.*$)'
+      replace: '\1 verbose \2'
+  notify: 
+    - rebuild grub
+
+- name: flush handlers
+  meta: flush_handlers
+
+- name: Create nessus account
+  user: 
+      name: nessus
+      comment: 'Nessus,informationsecurity-officers@intrado.com'
+      shell: /bin/bash
+      home: /home/nessus
+      state: present
+      ssh_key_file: 'files/nessus.pub'
+
+- name: Ensure nessus has a the key
+  authorized_key:
+      user: nessus
+      key: '{{ item }}'
+      state: present
+  with_file: 
+      - files/nessus.pub
+
+- name: Ensure unixsvc has a the incojs01 key
+  authorized_key:
+      user: unixsvc
+      key: '{{ item }}'
+      state: present
+  with_file: 
+      - files/unixsvc-js01.pub
+
+- name: disable unwanted services
+  systemd:
+      name: '{ item }'
+      state: stopped
+      masked: yes
+      enabled: no
+  ignore_errors: true
+  with_items:
+    - auditd
+    - cpupower
+    - printer
+    - systemd-firstboot
+    - firewalld
+    - microcode
+    - saslauthd
+    - abrt-xorg
+    - abrtd
+    - wpa_supplicant

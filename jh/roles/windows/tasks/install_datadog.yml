@@ -1,0 +1,146 @@
+
+- name: Set download directory
+  ansible.builtin.set_fact:
+    agent_dl_dir: "{{ drives.data | default('C', true) }}:\\tools"
+
+- name: Create tools directory
+  ansible.windows.win_file:
+    path: "{{ agent_dl_dir }}"
+    state: directory
+
+- name: Download datadog agent msi
+  ansible.windows.win_shell: |
+    gsutil cp {{ agents.datadog.agent_gcs_uri }} {{ agent_dl_dir }}\\ddagent-cli-{{ agents.datadog.agent_version }}.msi
+  args:
+    creates: "{{ agent_dl_dir }}\\ddagent-cli-{{ agents.datadog.agent_version }}.msi"
+    chdir: C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin
+
+- name: Retrieve datadog api key from Google Secret Manager
+  ansible.windows.win_shell: |
+    gcloud secrets versions access latest --secret="datadog-apikey"
+  register: datadog_api_key
+  no_log: true
+  changed_when: datadog_api_key.rc != 0
+
+- name: Install datadog from msi
+  ansible.windows.win_package:
+    path: "{{ agent_dl_dir }}\\ddagent-cli-{{ agents.datadog.agent_version }}.msi"
+    arguments:
+      - /passive
+      - APIKEY={{ datadog_api_key.stdout }}
+      - DDAGENTUSER_NAME={{ agents.datadog.ddagentuser_name }}
+      - DDAGENTUSER_PASSWORD='NotUsed'
+      - SITE={{ agents.datadog.site }}
+      - LOGS_ENABLED=true
+      - ENV={{ agents.datadog.environment }}
+    creates_path: "C:\\Program Files\\Datadog\\Datadog Agent\\bin\\agent.exe"
+    log_path: "C:\\Windows\\Temp\\ddagent-msi.log"
+  become: true
+  vars:
+    ansible_become_method: runas
+    ansible_become_user: SYSTEM
+
+# - name: APM Block
+#   when:
+#     - datadog_apm_enabled | default('false') | bool
+#   block:
+#     - name: Download datadog apm msi
+#       ansible.windows.win_shell: |
+#         gsutil cp {{ agents.datadog.apm_gcs_uri }} {{ agent_dl_dir }}\\datadog-dotnet-apm-{{ agents.datadog.apm_version }}-x64.msi
+#       args:
+#         creates: "{{ agent_dl_dir }}\\datadog-dotnet-apm-{{ agents.datadog.apm_version }}-x64.msi"
+#         chdir: C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin
+
+#     - name: Install datadog apm from msi
+#       ansible.windows.win_package:
+#         path: "{{ agent_dl_dir }}\\datadog-dotnet-apm-{{ agents.datadog.apm_version }}-x64.msi"
+#         arguments:
+#           - /qn
+#           - /norestart
+#         creates_path: "C:\\Program Files\\Datadog\\.NET Tracer\\dd-dotnet.cmd"
+#       no_log: true
+
+#     - name: Create system-probe config file from Jinja2 template
+#       ansible.windows.win_template:
+#         src: "{{ role_path }}/templates/system_probe.yaml.j2"
+#         dest: "C:\\ProgramData\\Datadog\\system_probe.yaml"
+#       register: systemprobe_conf
+
+#     - name: Restart datadog agent service if system-probe conf changed
+#       when: systemprobe_conf.changed
+#       ansible.windows.win_service:
+#         name: Datadog Agent
+#         state: restarted
+#         force_dependent_services: true
+
+#     - name: Remove ntp.d conf file
+#       ansible.windows.win_file:
+#         path: C:\ProgramData\Datadog\conf.d\ntp.d\conf.yaml.default
+#         state: absent
+
+- name: Create datadog config file from Jinja2 template
+  ansible.windows.win_template:
+    src: "{{ role_path }}/templates/datadog.yaml.j2"
+    dest: "C:\\ProgramData\\Datadog\\datadog.yaml"
+  register: datadog_conf
+
+- name: Datadog conf.d block
+  when:
+    - datadog is not none
+    - datadog is defined
+  block:
+    - name: Make the conf.d subdirectories
+      when:
+        - datadog.confd is not none
+        - datadog.confd is defined
+      ansible.windows.win_file:
+        path: "C:\\ProgramData\\Datadog\\conf.d\\{{ item.conf_dir }}"
+        state: directory
+      loop: "{{ datadog.confd }}"
+
+    - name: Make the conf.d subdirectories
+      when:
+        - datadog.confd is not none
+        - datadog.confd is defined
+      ansible.windows.win_file:
+        path: "C:\\ProgramData\\Datadog\\conf.d\\{{ item.conf_dir }}"
+        state: directory
+      loop: "{{ datadog.confd }}"
+
+    - name: Create conf.d files from Jinja2 template
+      when:
+        - datadog.confd is not none
+        - datadog.confd is defined
+      ansible.windows.win_template:
+        src: "{{ role_path }}/templates/datadog_confd.yaml.j2"
+        dest: "C:\\ProgramData\\Datadog\\conf.d\\{{ item.conf_dir }}\\{{ item.filename }}"
+      loop: "{{ datadog.confd }}"
+      register: service_conf
+
+    - name: Block for single conf
+      when: datadog.confd | length == 1
+      block:
+        - name: Restart datadog agent service if any conf changed
+          when: service_conf.changed
+          ansible.windows.win_service:
+            name: Datadog Agent
+            state: restarted
+            force_dependent_services: true
+
+    - name: Block for multiple conf
+      when: datadog.confd | length > 1
+      block:
+        - name: Restart datadog agent service if any conf changed
+          when: item.changed
+          ansible.windows.win_service:
+            name: Datadog Agent
+            state: restarted
+            force_dependent_services: true
+          loop: "{{ service_conf.results }}"
+
+- name: Restart datadog agent service if dd conf changed
+  when: datadog_conf.changed
+  ansible.windows.win_service:
+    name: Datadog Agent
+    state: restarted
+    force_dependent_services: true

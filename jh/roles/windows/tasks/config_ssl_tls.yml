@@ -1,0 +1,322 @@
+- name: Add or update registry path, SecurityProviders\SCHANNEL
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL
+    name: EventLogging
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\AES 128/128
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\AES 128/128
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\AES 256/256
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\AES 256/256
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\DES 56/56
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\DES 56/56
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\NULL
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\NULL
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\RC2 128/128
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC2 128/128
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\RC2 40/128
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC2 40/128
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\RC2 56/128
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC2 56/128
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\RC4 128/128
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 128/128
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\RC4 40/128
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 40/128
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\RC4 56/128
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 56/128
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\RC4 64/128
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 64/128
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\Triple DES 168
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\Triple DES 168
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Ciphers\Triple DES 168/168
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\Triple DES 168/168
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Hashes\MD5
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Hashes\MD5
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Hashes\SHA
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Hashes\SHA
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Hashes\SHA256
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Hashes\SHA256
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Hashes\SHA384
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Hashes\SHA384
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Hashes\SHA384
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Hashes\SHA512
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\Schannel\KeyExchangeAlgorithms\Diffie-Hellman
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\Schannel\KeyExchangeAlgorithms\Diffie-Hellman
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\Schannel\KeyExchangeAlgorithms\ECDH
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\Schannel\KeyExchangeAlgorithms\ECDH
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\Schannel\KeyExchangeAlgorithms\PKCS
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\Schannel\KeyExchangeAlgorithms\PKCS
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\PCT 1.0\Client
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\PCT 1.0\Client
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\PCT 1.0\Client DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\PCT 1.0\Client
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\PCT 1.0\Server
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\PCT 1.0\Server
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\PCT 1.0\Server DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\PCT 1.0\Server
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Client
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Client
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Client DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Client
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Server
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Server
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Server DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Server
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Client
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Client
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Client DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Client
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Client
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Client
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Client DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Client
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Client
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Client
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Client DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Client
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server
+    name: Enabled
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server
+    name: DisabledByDefault
+    data: 00000001
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client DEFAULT
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client
+    name: DisabledByDefault
+    data: 00000000
+    type: dword
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server
+    name: Enabled
+    data: ffffffff
+    type: binary
+
+- name: Add or update registry path, SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server
+  ansible.windows.win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server
+    name: DisabledByDefault
+    data: 00000000
+    type: dword
+

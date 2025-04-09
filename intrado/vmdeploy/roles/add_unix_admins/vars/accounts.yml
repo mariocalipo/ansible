@@ -1,0 +1,11 @@
+---
+ugroup: sysadmin
+
+users:
+  - {uname: "jcorrea", gecos: "Jose Correa,jose.correa@west.com", shell: "/bin/bash", passwd: "fkS028c2ww.M2"}
+  - {uname: "jnoyes", gecos: "James Noyes,james.noyes@intrado.com", shell: "/bin/bash", passwd: "OnK2io./KImo6"}
+  - {uname: "kzupan", gecos: "Kevin Zupan,kzupan@intrado.com", shell: "/bin/bash", passwd: "nMFi2.I5VefbU"}
+  - {uname: "tcooper", gecos: "Tom Cooper,tom.cooper@intrado.com", shell: "/bin/bash", passwd: "gR5ANQBrhti9w"}
+
+#labusers:
+#  - {uname: "jowen", gecos: "Josh Owen,josh.owen@intrado.com", shell: "/bin/bash", passwd: "$6$zxZTGhWe$8ct3vNFxcoMStRr1rfIH8dDMfvXYKeNPbc1amZxnlLF0nMa4VOHk/678jrHAWQo/TZYR0.IXgHX66m.etHpy0."}

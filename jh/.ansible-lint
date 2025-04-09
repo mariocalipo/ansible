@@ -1,0 +1,6 @@
+exclude_paths:
+
+skip_list:
+  - yaml[line-length]
+  - latest[git]
+  - no-changed-when

@@ -1,0 +1,116 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Hardening playbook
+# Author: marioc@ciandt.com
+
+# Check if DeepSecurity agent exists
+- name: "Check if Deep Security Agent Service file exists"
+  stat:
+    path: /usr/lib/systemd/system/ds_agent.service
+  register: dsagentservicefile
+- debug:
+    msg: "File Deep Security Agent Service exists..."
+  when: dsagentservicefile.stat.exists
+- debug:
+    msg: "File Deep Security Agent Service not found..."
+  when: dsagentservicefile.stat.exists == False
+  tags: deepsecurity
+
+# Stop and disable DeepSecurity agent
+- name: "Stop and Disable Deep Security Agent Service"
+  service:
+    name: ds_agent
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+  when: dsagentservicefile.stat.exists == True
+  tags: deepsecurity
+
+# Uninstall DeepSecurity agent (Ubuntu)
+- name: "Uninstall Deep Security Agent Package on Ubuntu"
+  apt:
+    name: ds-agent
+    state: absent
+  when: ansible_facts['distribution']=="Ubuntu"
+
+# Uninstall DeepSecurity agent (CentOS/RHEL/AmazonLinux)
+- name: "Uninstall Deep Security Agent Package on CentOS/RHEL/AmazonLinux"
+  yum:
+    name: ds_agent
+    state: absent
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon"
+
+# Remove DeepSecurity directories
+- name: "Remove Directories from Deep Security Agent"
+  file:
+    state: absent
+    path: "/opt/ds_agent/"
+
+# Copy DeepSecurity agent deployment script and store into /opt
+- name: "Set Installation script for Deep Security Agent on destination"
+  template:
+    src: AgentDeploymentScript-Linux.sh.j2
+    dest: /opt/AgentDeploymentScript-Linux.sh
+    owner: root
+    group: root
+    mode: u=rwx,g=rwx,o=r
+  when: ansible_distribution_version is version('21.00', '<')
+  tags: deepsecurity
+
+# Install DeepSecurity agent
+- name: "Install Deep Security Agent"
+  command: "/opt/AgentDeploymentScript-Linux.sh"
+  when: ansible_distribution_version is version('21.00', '<')
+  tags: deepsecurity
+
+# Run DeepSecurity command
+- name: "Run Deep Security Agent"
+  command: "/opt/ds_agent/dsa_control -r"
+  when: ansible_distribution_version is version('21.00', '<')
+  tags: deepsecurity
+
+# Register DeepSecurity based on Level set into "deepsecurity_level" variable
+- name: "Register Deep Security Agent as Vital"
+  command: "/opt/ds_agent/dsa_control -a dsm://agents.deepsecurity.trendmicro.com:443/ tenantID:A060AE59-FE63-483B-03A1-A93A65BBD8AC token:FBA02499-2DD8-3239-E40C-D0647A28E591 groupid:204"
+  when: deepsecurity_level == 1 and
+        ansible_distribution_version is version('21.00', '<')
+  tags: deepsecurity
+
+- name: "Register Deep Security Agent as Critical"
+  command: "/opt/ds_agent/dsa_control -a dsm://agents.deepsecurity.trendmicro.com:443/ tenantID:A060AE59-FE63-483B-03A1-A93A65BBD8AC token:FBA02499-2DD8-3239-E40C-D0647A28E591 groupid:201"
+  when: deepsecurity_level == 2 and
+        ansible_distribution_version is version('21.00', '<')
+  tags: deepsecurity
+
+- name: "Register Deep Security Agent as Important"
+  command: "/opt/ds_agent/dsa_control -a dsm://agents.deepsecurity.trendmicro.com:443/ tenantID:A060AE59-FE63-483B-03A1-A93A65BBD8AC token:FBA02499-2DD8-3239-E40C-D0647A28E591 groupid:202"
+  when: deepsecurity_level == 3 and
+        ansible_distribution_version is version('21.00', '<')
+  tags: deepsecurity
+
+- name: "Register Deep Security Agent as Relevant"
+  command: "/opt/ds_agent/dsa_control -a dsm://agents.deepsecurity.trendmicro.com:443/ tenantID:A060AE59-FE63-483B-03A1-A93A65BBD8AC token:FBA02499-2DD8-3239-E40C-D0647A28E591 groupid:203"
+  when: deepsecurity_level == 4 and
+        ansible_distribution_version is version('21.00', '<')
+  tags: deepsecurity
+
+# Enable DeepSecurity service
+- name: "Enable Deep Security Agent Service"
+  service:
+    name: ds_agent
+    enabled: yes
+  when: ansible_distribution_version is version('21.00', '<')
+  tags: deepsecurity
+
+# Restart DeepSecurity service
+- name: "Restart Deep Security Agent Service"
+  service:
+    name: ds_agent
+    state: restarted
+  when: ansible_distribution_version is version('21.00', '<')
+  tags: deepsecurity

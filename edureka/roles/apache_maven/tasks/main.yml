@@ -1,0 +1,5 @@
+# Edureka Ansible Task from New Servers playbook
+# Author: Mario Calipo
+
+# Import below tasks
+- import_tasks: maven_all.yml

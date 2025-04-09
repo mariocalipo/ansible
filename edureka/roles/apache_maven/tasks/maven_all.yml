@@ -1,0 +1,44 @@
+# Edureka Ansible Task from New Servers playbook
+# Author: Mario Calipo
+
+# Install python-software-properties
+  - name: Install python-software-properties
+    apt:
+      name: software-properties-common
+      state: present
+
+# Add Java repository into sources list
+#- name: Add Java repository into sources list
+#  apt_repository:
+#    repo: ppa:webupd8team/java
+#    state: present
+
+# Update packages
+  - name: Update the System Packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+
+# Install Default JDK
+  - name: Install JDK
+    apt:
+      name: default-jdk
+      state: present
+
+# Create Maven Directory
+  - name: Create a directory if it does not exist
+    file:
+      path: /opt/maven
+      state: directory
+      mode: '0755'
+
+# Download and Unarchive Maven
+  - name: Download & Unarchive Maven 
+    unarchive:
+      src: https://archive.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gzs
+      dest: /opt/maven
+      remote_src: yes
+
+# Install Maven
+- name: Install Maven
+  shell: "export PATH=/opt/maven/apache-maven-3.3.9/bin:$PATH"

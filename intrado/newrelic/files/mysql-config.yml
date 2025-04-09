@@ -1,0 +1,12 @@
+integrations:
+  - name: nri-mysql
+    env:
+      HOSTNAME: localhost
+      PORT: 3306
+      USERNAME: sqlnewrelic_svc
+      PASSWORD: g0AAb9|y8=RU0dA
+      REMOTE_MONITORING: true
+    interval: 60s
+    labels:
+      environment: CIL
+    inventory_source: config/mysql

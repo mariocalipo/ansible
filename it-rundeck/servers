@@ -1,0 +1,174 @@
+[linux]
+bts-reverse-proxy-jiracloud.ciandt.global ansible_host=172.17.7.47
+hematita.ciandt.global ansible_host=172.17.7.199
+jiradatabase.ciandt.global ansible_host=172.17.5.248
+jira.ciandt.global ansible_host=172.17.7.127
+lnawbrp003.ciandt.global ansible_host=172.17.5.94
+lnawbrp004.ciandt.global ansible_host=172.17.5.175
+lnawbrp005.ciandt.global ansible_host=172.28.39.143
+lnawbrp006.ciandt.global ansible_host=172.17.5.177
+lnawusp002.ciandt.global ansible_host=172.17.25.140
+lnoncpp011.ciandt.global ansible_host=172.16.22.22
+lnoncpp015.ciandt.global ansible_host=172.16.22.15
+mailrelay.ciandt.global ansible_host=172.17.7.201
+malaquita.ciandt.global ansible_host=172.17.7.97
+malaquitacorp.ciandt.global ansible_host=172.17.7.163
+lnonbhp001.ciandt.global ansible_host=172.16.98.30
+lnoncpp022.ciandt.global ansible_host=172.16.22.20
+lnoncpd001.ciandt.global ansible_host=172.16.22.191
+lnoncpp023.ciandt.global ansible_host=172.16.22.90
+jirahomolog.ciandt.global ansible_host=172.30.1.47
+jiradatabasehomolog.ciandt.global ansible_host=172.30.3.96
+lnawbrp007.ciandt.global ansible_host=172.17.7.87
+lnoncpp014.ciandt.global ansible_host=172.16.22.199
+lnoncpp021.ciandt.global ansible_host=172.16.22.99
+rundeck.ciandt.global ansible_connection=local
+lnawbrp008.ciandt.global ansible_host=172.17.4.81
+lnoncpp024.ciandt.global ansible_host=172.16.22.48
+
+[windows]
+wioncpp031.ciandt.global ansible_host=172.16.22.103 
+
+[windows:vars]
+ansible_user=sa_ansible
+ansible_password=Y8JK5meKWWbn8y55ZRxcKeY5KZsxVfU7gQzPM8aqPsc37QsKRx
+ansible_port=5986
+ansible_connection=winrm
+ansible_winrm_kerberos_delegation=true
+ansible_winrm_transport=kerberos
+ansible_winrm_server_cert_validation=ignore
+ansible_shell_type=powershell
+
+[proxyserver]
+bts-reverse-proxy-jiracloud.ciandt.global ansible_host=172.17.7.47
+malaquita.ciandt.global ansible_host=172.17.7.97
+malaquitacorp.ciandt.global ansible_host=172.17.7.163
+lnawbrp007.ciandt.global ansible_host=172.17.7.87
+
+[database]
+jiradatabasehomolog.ciandt.global ansible_host=172.30.3.96
+lnoncpd001.ciandt.global ansible_host=172.16.22.191
+lnawbrp006.ciandt.global ansible_host=172.17.5.177
+jiradatabase.ciandt.global ansible_host=172.17.5.248
+hematita.ciandt.global ansible_host=172.17.7.199
+
+[oracle]
+jiradatabasehomolog.ciandt.global ansible_host=172.30.3.96
+lnoncpd001.ciandt.global ansible_host=172.16.22.191
+hematita.ciandt.global ansible_host=172.17.7.199
+jiradatabase.ciandt.global ansible_host=172.17.5.248
+
+[development]
+lnoncpd001.ciandt.global ansible_host=172.16.22.191
+jirahomolog.ciandt.global ansible_host=172.30.1.47
+jiradatabasehomolog.ciandt.global ansible_host=172.30.3.96
+
+[jira]
+jirahomolog.ciandt.global ansible_host=172.30.1.47
+jiradatabasehomolog.ciandt.global ansible_host=172.30.3.96
+bts-reverse-proxy-jiracloud.ciandt.global ansible_host=172.17.7.47
+jiradatabase.ciandt.global ansible_host=172.17.5.248
+
+[aws]
+jirahomolog.ciandt.global ansible_host=172.30.1.47
+jiradatabasehomolog.ciandt.global ansible_host=172.30.3.96
+lnawbrp003.ciandt.global ansible_host=172.17.5.94
+lnawbrp004.ciandt.global ansible_host=172.17.5.175
+lnawbrp005.ciandt.global ansible_host=172.28.39.143
+lnawbrp006.ciandt.global ansible_host=172.17.5.177
+lnawbrp007.ciandt.global ansible_host=172.17.7.87
+lnawusp002.ciandt.global ansible_host=172.17.25.140
+bts-reverse-proxy-jiracloud.ciandt.global ansible_host=172.17.7.47
+hematita.ciandt.global ansible_host=172.17.7.199
+jira.ciandt.global ansible_host=172.17.7.127
+
+[cloud]
+jirahomolog.ciandt.global ansible_host=172.30.1.47
+jiradatabasehomolog.ciandt.global ansible_host=172.30.3.96
+lnawbrp003.ciandt.global ansible_host=172.17.5.94
+lnawbrp004.ciandt.global ansible_host=172.17.5.175
+lnawbrp005.ciandt.global ansible_host=172.28.39.143
+lnawbrp006.ciandt.global ansible_host=172.17.5.177
+lnawbrp007.ciandt.global ansible_host=172.17.7.87
+lnawusp002.ciandt.global ansible_host=172.17.25.140
+bts-reverse-proxy-jiracloud.ciandt.global ansible_host=172.17.7.47
+hematita.ciandt.global ansible_host=172.17.7.199
+jira.ciandt.global ansible_host=172.17.7.127
+
+[campinas]
+lnoncpp011.ciandt.global ansible_host=172.16.22.22
+lnoncpp015.ciandt.global ansible_host=172.16.22.15
+lnoncpp022.ciandt.global ansible_host=172.16.22.20
+lnoncpd001.ciandt.global ansible_host=172.16.22.191
+lnoncpp023.ciandt.global ansible_host=172.16.22.90
+lnoncpp014.ciandt.global ansible_host=172.16.22.199
+lnoncpp021.ciandt.global ansible_host=172.16.22.99
+rundeck.ciandt.global ansible_connection=local
+
+[onpremises]
+lnoncpp011.ciandt.global ansible_host=172.16.22.22
+lnoncpp015.ciandt.global ansible_host=172.16.22.15
+lnoncpp022.ciandt.global ansible_host=172.16.22.20
+lnoncpd001.ciandt.global ansible_host=172.16.22.191
+lnoncpp023.ciandt.global ansible_host=172.16.22.90
+lnoncpp014.ciandt.global ansible_host=172.16.22.199
+lnoncpp021.ciandt.global ansible_host=172.16.22.99
+lnonbhp001.ciandt.global ansible_host=172.16.98.30
+rundeck.ciandt.global ansible_connection=local
+
+[hardening]
+lnawbrp010.ciandt.global ansible_host=172.17.4.12
+
+[compliance]
+bts-reverse-proxy-jiracloud.ciandt.global ansible_host=172.17.7.47
+hematita.ciandt.global ansible_host=172.17.7.199
+jiradatabase.ciandt.global ansible_host=172.17.5.248
+jira.ciandt.global ansible_host=172.17.7.127
+lnawbrp003.ciandt.global ansible_host=172.17.5.94
+lnawbrp004.ciandt.global ansible_host=172.17.5.175
+lnawbrp005.ciandt.global ansible_host=172.28.39.143
+lnawbrp006.ciandt.global ansible_host=172.17.5.177
+lnawusp002.ciandt.global ansible_host=172.17.25.140
+lnoncpp011.ciandt.global ansible_host=172.16.22.22
+lnoncpp015.ciandt.global ansible_host=172.16.22.15
+mailrelay.ciandt.global ansible_host=172.17.7.201
+malaquita.ciandt.global ansible_host=172.17.7.97
+malaquitacorp.ciandt.global ansible_host=172.17.7.163
+lnonbhp001.ciandt.global ansible_host=172.16.98.30
+lnoncpp022.ciandt.global ansible_host=172.16.22.20
+lnoncpd001.ciandt.global ansible_host=172.16.22.191
+lnoncpp023.ciandt.global ansible_host=172.16.22.90
+jirahomolog.ciandt.global ansible_host=172.30.1.47
+jiradatabasehomolog.ciandt.global ansible_host=172.30.3.96
+lnawbrp007.ciandt.global ansible_host=172.17.7.87
+rundeck.ciandt.global ansible_connection=local
+lnoncpp014.ciandt.global ansible_host=172.16.22.199
+lnoncpp021.ciandt.global ansible_host=172.16.22.99
+lnoncpp024.ciandt.global ansible_host=172.16.22.48
+
+[rundeck]
+rundeck.ciandt.global ansible_connection=local
+
+[fortigate]
+fwjp.ciandt.global ansible_host=172.28.4.104 prefix=fwjp
+fwcps.ciandt.global ansible_host=172.16.24.1 prefix=fwcps
+fwbh.ciandt.global ansible_host=172.16.105.1 prefix=fwbh
+fwoak.ciandt.global ansible_host=172.16.143.1 prefix=fwoak
+fwctb.ciandt.global ansible_host=172.16.207.1 prefix=fwctb
+fwngb.ciandt.global ansible_host=192.168.3.1 prefix=fwngb
+fwpctn.ciandt.global ansible_host=172.16.176.1 prefix=fwpctn
+fwche.ciandt.global ansible_host=192.168.18.1 prefix=fwche
+
+[fortigate:vars]
+ansible_network_os=fortinet.fortios.fortios
+ansible_connection=httpapi
+ansible_httpapi_port=12443
+ansible_httpapi_use_ssl=yes
+ansible_httpapi_validate_certs=no
+
+#[testebitbucket]
+#lnoncpd001.ciandt.global ansible_host=172.16.22.191
+#jirahomolog.ciandt.global ansible_host=172.30.1.47
+#lnoncpp021.ciandt.global ansible_host=172.16.22.99
+
+[all:vars]

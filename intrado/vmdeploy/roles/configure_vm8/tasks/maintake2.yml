@@ -1,0 +1,64 @@
+---
+- name: Gathering facts
+  setup:
+
+- name: Get hostname of server
+  command: 'uname -n'
+  register: whoisit
+
+- fail: 
+      msg: "Configuration halted.  Server reached is not the target server"
+  when: whoisit.stdout|string not in 
+
+- name: Update /etc/hosts
+  template: 
+      src: files/etchosts.tmpl
+      dest: /etc/hosts
+
+- name: Add DNS2 entry to /etc/sysconfig/network-scripts/ifcfg-ens192
+  lineinfile:
+      path: /etc/sysconfig/network-scripts/ifcfg-ens192
+      line: 'DNS2={{ vdns2 }}'
+      insertafter: '^DNS1'
+      regexp: '^DNS2.*'
+      state: present
+  when: vdns2 is defined
+  notify: reload network config
+
+- name: Add DOMAIN entry to /etc/sysconfig/network-scripts/ifcfg-ens192
+  lineinfile:
+      path: /etc/sysconfig/network-scripts/ifcfg-ens192
+      line: 'DOMAIN="{{ vdnssrch }}"'
+      insertafter: '^DNS'
+      regexp: '^DOMAIN.*'
+      state: present
+  notify: reload network config
+
+- name: Update /etc/sysconfig/network
+  template: 
+      src: files/network8
+      dest: /etc/sysconfig/network
+  notify: reload network config
+
+#- name: Update resolv.conf
+#  template: 
+#      src: files/resolv.conf
+#      dest: /etc/resolv.conf
+
+#- name: Update /etc/sysconfig/networks-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
+#  template:
+#      src: files/ifcfg8-prinic
+#      dest: /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
+#  notify: nmcli reload
+
+#- name: Update /etc/sysconfig/networks-scripts/ifcfg-{{ second_nic }}
+#  template:
+#      src: files/ifcfg8-secnic
+#      dest: /etc/sysconfig/network-scripts/ifcfg-{{ second_nic }}
+#  notify: nmcli reload
+#  when: second_nic is defined
+
+- name: Update sudoers
+  template: 
+      src: files/sudoers
+      dest: /etc/sudoers

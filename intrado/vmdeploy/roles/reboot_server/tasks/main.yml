@@ -1,0 +1,24 @@
+---
+- name: remove reboot file if it exists
+  file:
+      path: /root/.rebootme
+      state: absent
+  register: rebootfile
+  become: true
+
+- debug:
+      msg: '{{ rebootfile }}'
+
+- name: Reboot the system '{{ target_vm }}'
+  reboot:
+    msg: 'Ansible is rebooting the system'
+  become: true
+  when: rebootfile.changed == True or ( forcereboot is defined and forcereboot|bool == True )
+
+- name: Wait for system to come back
+  wait_for_connection:
+      connect_timeout: 20
+      sleep: 5
+      delay: 5
+      timeout: 300
+  when: rebootfile.changed == True or ( forcereboot is defined and forcereboot|bool == True )

@@ -1,0 +1,44 @@
+---
+# Create updated newrelic-infra.yml file
+# This will not replace the existing license
+# The license is used to validate the config file 
+# 
+- hosts: all
+  become: true
+  vars: 
+  tasks: 
+  - name: check for newrelic installation
+    shell: 'rpm -q -a | grep newrelic-infra | wc -l'
+    register: rpmcheck
+
+  - fail:
+      msg: 'newrelic not installed'
+    when: rpmcheck.stdout|int == 0
+
+  - name: check for matching license key
+    shell: 'grep {{ newrelic_license_key }} /etc/newrelic-infra.yml | wc -l'
+    register: lkeycheck
+
+  - fail:
+      msg: 'invalid license key'
+    when: lkeycheck.stdout|int == 0
+
+  - name: check for additional lines
+    shell: 'egrep "log_file|enable_process_metrics|verbose" /etc/newrelic-infra.yml | wc -l'
+    register: addlineschk
+
+  - fail:
+      msg: 'newrelic-infra.yml already updated'
+    when: addlineschk.stdout|int == 3
+
+  - name: push updated file if different /etc/newrelic-infra.yml
+    template:
+      src: files/newrelic.yml
+      dest: /etc/newrelic-infra.yml
+    notify: restart newrelic
+
+  handlers:
+  - name: restart newrelic
+    service:
+      name: 'newrelic-infra'
+      state: restarted

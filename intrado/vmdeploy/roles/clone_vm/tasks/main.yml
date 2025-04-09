@@ -1,0 +1,127 @@
+---
+- name: Gather variables
+  include_vars: 
+    file: '{{ vaultfile }}'
+
+- debug:
+    msg: "Hello {{ vcsuser }}"
+
+- name: Verify '{{ target_vm }}' doesn't already exists
+  vmware_guest_find: 
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    name: '{{ target_vm }}'
+  ignore_errors: true
+  register: vm_folder
+
+- debug:
+    msg: "vm_folder {{ vm_folder.folders }}"
+  when: vm_folder.failed == False
+
+- debug:
+    msg: "{{ target_vm }} not found"
+  when: vm_folder.failed == True
+
+- fail:
+    msg: "{{ target_vm }} already exists in {{ vm_folder.folders }}"
+  when: vm_folder.failed == False and target_folder in vm_folder.folders
+#when: vmfacts.instance.hw_folder == target_folder
+
+
+- name: Deploy 'single_nic {{ target_vm }} {{ ipaddr }} {{ netm }} {{ gw }}'
+  vmware_guest:
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    datacenter: '{{ target_dc }}'
+    cluster: '{{ target_cluster }}'
+    name: '{{ target_vm }}'
+    template: '{{ target_vmtemplate }}'
+    folder: '{{ target_folder }}'
+#    annotation: 'Created with Ansible using {{ template }}'
+    annotation: '{{ target_vmnotes }}'
+    datastore: '{{ datastorecluster }}'
+    networks:
+    - name: '{{ vlan }}'
+      ip: '{{ ipaddr }}'
+      netmask: '{{ netm }}'
+      gateway: '{{ gw }}'
+      type: static
+      device_type: vmxnet3
+    wait_for_ip_address: true
+    customization:
+        hostname: '{{ fqdn }}'
+#        domain: '{{ vdomain }}'
+        dns_servers:
+          - '{{ vdns1 }}'
+    state: poweredon
+  when: second_nic is not defined
+
+- name: Deploy 'dual_nic {{ target_vm }} {{ ipaddr }} {{ netm }} {{ gw }} {{ secipaddr }}'
+  vmware_guest:
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    datacenter: '{{ target_dc }}'
+    cluster: '{{ target_cluster }}'
+    name: '{{ target_vm }}'
+    template: '{{ target_vmtemplate }}'
+    folder: '{{ target_folder }}'
+#    annotation: 'Created with Ansible using {{ template }}'
+    annotation: '{{ target_vmnotes }}'
+    datastore: '{{ datastorecluster }}'
+    hardware:
+      num_cpus: '{{ cpus | default(2) }}'
+      memory_mb: '{{ mem | default(4096) }}'
+    networks:
+    - name: '{{ vlan }}'
+      ip: '{{ ipaddr }}'
+      netmask: '{{ netm }}'
+      gateway: '{{ gw }}'
+      type: static
+      device_type: vmxnet3
+    - name: '{{ secvlan }}'
+      ip: '{{ secipaddr }}'
+      netmask: '{{ secnetm }}'
+      type: static
+      device_type: vmxnet3
+    wait_for_ip_address: true
+    customization:
+        hostname: '{{ fqdn }}'
+#        domain: '{{ vdomain }}'
+        dns_servers:
+          - '{{ vdns1 }}'
+    state: poweredon
+  when: second_nic is defined
+
+- name: Get facts for '{{ target_vm }}'
+  vmware_guest_info:
+      datacenter: '{{ target_dc }}'
+      folder: '{{ target_folder }}'
+      hostname: '{{ vcenterserver }}'
+      username: '{{ vcsuser }}'
+      password: '{{ vcsuserpass }}'
+      validate_certs: no
+      name: '{{ target_vm }}'
+  register: vmfacts
+
+- name: Add additional disks if needed
+  vmware_guest_disk:
+    hostname: '{{ vcenterserver }}'
+    username: '{{ vcsuser }}'
+    password: '{{ vcsuserpass }}'
+    validate_certs: no
+    datacenter: '{{ target_dc }}'
+    uuid: '{{ vmfacts.instance.hw_product_uuid }}'
+    disk:
+    - size_gb: '{{ item.size }}'
+      type: '{{ item.type }}'
+      unit_number: '{{ item.unitno }}'
+      scsi_controller: '{{ item.scsico }}'
+      datastore: '{{ vmfacts.instance.hw_datastores[0] }}'
+  with_items: '{{ target_disks }}'
+  when: target_disks is defined and clonedavm is not defined

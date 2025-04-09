@@ -1,0 +1,5 @@
+- name: Import install_cyberreason.yml
+  ansible.builtin.import_tasks: install_cyberreason.yml
+
+- name: Import install_qualys.yml
+  ansible.builtin.import_tasks: install_qualys.yml

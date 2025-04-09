@@ -1,0 +1,16 @@
+---
+- hosts: all
+  gather_facts: no
+  vars:
+#  tasks:
+#  - name: Gather variables
+#    include_vars: 
+#      file: '{{ vaultfile }}'
+  roles:
+  - { role: add_hostentry, connection: local, become: true, vars: { ansible_python_interpreter: $(which python) },when: buildvm is defined and buildvm|bool }
+  - { role: deploy_vm_nocluster, connection: local, vars: { ansible_python_interpreter: $(which python) },when: buildvm is defined and buildvm|bool }
+  - { role: configure_vm, become: true }
+  - { role: add_unix_admins, user_to_become: "root", tags: ['unixadmins'], when: forceadminusers is defined and forceadminusers|bool }
+  - { role: final_config, become: true }
+  - { role: reboot_server, }
+  - { role: intrado, become: true }

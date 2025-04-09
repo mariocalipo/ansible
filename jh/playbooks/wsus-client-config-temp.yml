@@ -1,0 +1,15 @@
+---
+- name: Update Windows VMs to Point to WSUS
+  hosts: "{{target|default('localhost')}}"
+  strategy: free
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: kerberos
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_port: 5986
+    ansible_winrm_scheme: https
+  tasks:
+    - name: Set WSUS Client Config
+      ansible.builtin.include_role:
+        name: windows
+        tasks_from: set_default_au_service.yml

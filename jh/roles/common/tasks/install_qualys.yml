@@ -1,0 +1,128 @@
+# Set download directory by OS type
+- name: Set download directory (WIN)
+  ansible.builtin.set_fact:
+    agent_dl_dir: "{{ drives.data | default('C', true) }}:\\tools"
+  when: ansible_os_family == "Windows"
+
+- name: Set download directory (Linux)
+  ansible.builtin.set_fact:
+    agent_dl_dir: /tmp/tools
+  when: not ansible_os_family == "Windows"
+
+# Ensure tools dir exists
+- name: Create tools directory (WIN)
+  ansible.windows.win_file:
+    path: "{{ agent_dl_dir }}"
+    state: directory
+  when: ansible_os_family == "Windows"
+
+- name: Create tools directory (Linux)
+  ansible.builtin.file:
+    path: "{{ agent_dl_dir }}"
+    state: directory
+    mode: '0755'
+  when: not ansible_os_family == "Windows"
+
+# Download Agent
+
+## Linux deb
+- name: Download qualys cloud agent (Debian)
+  ansible.builtin.shell: |
+    gsutil cp {{ agents.qualys.linux_deb_gcs_uri }} {{ agent_dl_dir }}/QualysCloudAgent.deb
+  args:
+    creates: "{{ agent_dl_dir }}/QualysCloudAgent.deb"
+  when: ansible_os_family == "Debian"
+
+## Linux rpm
+- name: Download qualys cloud agent (RedHat)
+  ansible.builtin.shell: |
+    gsutil cp {{ agents.qualys.linux_rpm_gcs_uri }} {{ agent_dl_dir }}/QualysCloudAgent.rpm
+  args:
+    creates: "{{ agent_dl_dir }}/QualysCloudAgent.rpm"
+  when: ansible_os_family == "RedHat"
+
+## Windows
+- name: Download qualys cloud agent (Windows)
+  ansible.windows.win_shell: |
+    gsutil cp {{ agents.qualys.windows_gcs_uri }} {{ agent_dl_dir }}\\QualysCloudAgent.exe
+  args:
+    creates: "{{ agent_dl_dir }}\\QualysCloudAgent.exe"
+    chdir: C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin
+  when: ansible_os_family == "Windows"
+
+# Get activation id secret (Windows)
+- name: Retrieve qualys-activation-id from Google Secret Manager (Windows)
+  ansible.windows.win_shell: |
+    gcloud secrets versions access latest --secret="qualys-activation-id"
+  register: windows_qualys_activation_id
+  no_log: true
+  changed_when: windows_qualys_activation_id.rc != 0
+  when: ansible_os_family == "Windows"
+
+# Get activation id secret (Linux)
+- name: Retrieve qualys-activation-id from Google Secret Manager (Linux)
+  ansible.builtin.shell: |
+    gcloud secrets versions access latest --secret="qualys-activation-id"
+  register: linux_qualys_activation_id
+  no_log: true
+  changed_when: linux_qualys_activation_id.rc != 0
+  when: not ansible_os_family == "Windows"
+
+# Install Agent
+
+## Windows
+- name: Install qualys on Windows
+  when: ansible_os_family == "Windows"
+  block:
+
+    - name: Extract msi from exe
+      ansible.windows.win_shell: |
+        ./QualysCloudAgent.exe ExtractMSI=64
+      args:
+        chdir: "{{ agent_dl_dir }}"
+        creates: "{{ agent_dl_dir }}\\CloudAgent_x64.msi"
+
+    - name: Install qualys from msi
+      ansible.windows.win_package:
+        path: "{{ agent_dl_dir }}\\CloudAgent_x64.msi"
+        arguments: "/qn /norestart CustomerId={{ '{' }}{{ agents.qualys.customer_id }}{{ '}' }} ActivationId={{ '{' }}{{ windows_qualys_activation_id.stdout }}{{ '}' }} WebServiceUri={{ agents.qualys.web_service_uri }}"
+        creates_path: "C:\\Program Files\\Qualys\\QualysAgent\\QualysAgent.exe"
+
+- name: When not on windows
+  when: not ansible_os_family == "Windows"
+  block:
+
+    - name: Return service state information as fact data
+      ansible.builtin.service_facts:
+
+    ## Debian
+    - name: Install qualys on Debian
+      when: ansible_os_family == "Debian"
+      block:
+
+        - name: Get stats unit file
+          ansible.builtin.stat:
+            path: /lib/systemd/system/qualys-cloud-agent.service
+          register: st
+
+        - name: Install qualys .deb package
+          ansible.builtin.apt:
+            deb: "{{ agent_dl_dir }}/QualysCloudAgent.deb"
+          when: not st.stat.exists
+
+        - name: Start cloud agent
+          ansible.builtin.shell: |
+            sudo /usr/local/qualys/cloud-agent/bin/qualys-cloud-agent.sh \
+              ActivationId={{ linux_qualys_activation_id.stdout }} \
+              CustomerId={{ agents.qualys.customer_id }}
+          args:
+            creates: /lib/systemd/system/qualys-cloud-agent.service
+
+        - name: Enable and start service qualys-cloud-agent
+          ansible.builtin.service:
+            name: qualys-cloud-agent
+            enabled: true
+            state: started
+
+# TODO
+# 1. Add linux install steps for redhat

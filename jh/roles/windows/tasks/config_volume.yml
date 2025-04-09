@@ -1,0 +1,56 @@
+- name: Process the volume
+  when:
+    - item.number is not none
+    - item.number is defined
+  block:
+    - name: Get disk friendly name
+      ansible.windows.win_shell: |
+        Invoke-RestMethod -Headers @{"Metadata-Flavor" = "Google"} -Uri "http://metadata.google.internal/computeMetadata/v1/instance/disks/{{ item.number }}/device-name"
+      register: friendly_name
+
+    - name: Initialize the disk
+      community.windows.win_initialize_disk:
+        disk_number: "{{ item.number | int }}"
+
+    - name: Set data drive letter
+      ansible.builtin.set_fact:
+        drive_letter: "{{ drives.data }}"
+        drive_label: "data"
+      when:
+        - '"data" in friendly_name.stdout'
+
+    - name: Set install drive letter
+      ansible.builtin.set_fact:
+        drive_letter: "{{ drives.install }}"
+        drive_label: "install"
+      when:
+        - '"install" in friendly_name.stdout'
+
+    - name: Set logs drive letter
+      ansible.builtin.set_fact:
+        drive_letter: "{{ drives.logs }}"
+        drive_label: "logs"
+      when:
+        - '"logs" in friendly_name.stdout'
+
+    - name: Set tempdb drive letter
+      ansible.builtin.set_fact:
+        drive_letter: "{{ drives.tempdb }}"
+        drive_label: "tempdb"
+      when:
+        - '"tempdb" in friendly_name.stdout'
+
+    - name: Create a partition with drive letter and max size
+      when: item.partition_count == 0
+      community.windows.win_partition:
+        drive_letter: "{{ drive_letter | default('D') }}"
+        partition_size: -1
+        disk_number: "{{ item.number | int }}"
+
+    - name: Format the newly created partition as NTFS and label it
+      when: item.partition_style != "GPT"
+      community.windows.win_format:
+        drive_letter: "{{ drive_letter | default('D') }}"
+        file_system: NTFS
+        new_label: "{{ drive_label | default('Data') }}"
+        allocation_unit_size: "{{ block_size | default('4096') }}"

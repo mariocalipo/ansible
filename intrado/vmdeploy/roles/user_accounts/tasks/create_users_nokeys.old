@@ -1,0 +1,18 @@
+# Create Group/Users tasks
+---
+- name: create group
+  group:
+    name="{{ugroup}}"
+    state=present
+
+- name: create users
+  user:
+    name: "{{item.uname}}"
+    comment: "{{item.gecos}}"
+    groups: "{{ugroup}}"
+    append: yes
+    shell: "{{item.shell}}"
+    password: "{{item.passwd}}"
+    update_password: on_create
+    state: present
+  with_items: "{{users}}"

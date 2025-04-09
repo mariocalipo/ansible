@@ -1,0 +1,79 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Compliance playbook
+# Author: Pillar Squad
+
+# Check if DesktopCentral service exists
+- name: "Check if Desktop Central Service exists"
+  stat:
+    path: /etc/systemd/system/dcservice.service
+  register: dcservicefile
+
+# If DesktopCentral service exists, check if its running
+- name: "Checking Desktop Central service status"
+  command: systemctl status dcservice.service
+  when: dcservicefile.stat.exists == True
+  tags: desktopcentral
+  register: dc_status
+  ignore_errors: yes
+
+# If DesktopCentral service is not running, start it
+- name: "Start Desktop Central service if not running"
+  service:
+    name: dcservice
+    state: started
+  when: ("'running' not in dc_status.stdout") and (dcservicefile.stat.exists == True)
+  tags: desktopcentral
+
+# If DesktopCentral service doesnt exists, download and install it
+- name: "Download and Unzip Desktop Central Linux Agent from store.ciandt.com"
+  unarchive:
+    src: https://store.ciandt.com/apps/DCLinuxAgent.zip
+    dest: /opt/
+    remote_src: True
+    owner: root
+    group: root
+    mode: u=rwx,g=rwx,o=r
+  when: dcservicefile.stat.exists == False
+
+# Find DesktopCentral Installer
+- name: "Find Desktop Central installer"
+  find:
+      paths: /opt/DCLinuxAgent/
+      patterns: "DesktopCentral_LinuxAgent.bin"
+  register: result
+  when: dcservicefile.stat.exists == False
+  tags: desktopcentral
+
+# Execute install script
+- name: "Install Desktop Central"
+  shell: "cd /opt/DCLinuxAgent/ && bash {{ item.path }}"
+  with_items: '{{result.files}}'
+  when: dcservicefile.stat.exists == False
+
+# Wait till DesktopCentral service become available
+- name: "Wait for dcservice.service to be created (this can take a few minutes...)"
+  wait_for:
+    path: /etc/systemd/system/dcservice.service
+    state: present
+  when: dcservicefile.stat.exists == False
+  tags: desktopcentral
+
+# Enable DesktopCentral service
+- name: "Enable Desktop Central Service"
+  service:
+    name: dcservice
+    enabled: yes
+  when: dcservicefile.stat.exists == False
+  tags: desktopcentral
+
+# Restart DesktopCentral service
+- name: "Restart Desktop Central Service"
+  service:
+    name: dcservice
+    state: restarted
+  when: dcservicefile.stat.exists == False
+  tags: desktopcentral

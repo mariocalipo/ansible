@@ -1,0 +1,137 @@
+# Installed: /etc/newrelic-infra/logging.d/voice.yml
+logs:
+ - name: ienv_appl-mon
+   file: /ienv/alarms/appl-monitor-*.log
+   attributes:
+      appname: appl-monitor
+      team: IEN Voice App Sys Admins
+ - name: ienv_elx
+   file: /ienv/alarms/elx-alarms*.log
+   attributes:
+      appname: elx 
+      team: IEN Voice App Sys Admins
+ - name: ienv_elxmonitor
+   file: /ienv/alarms/elxmonitor-alarms*.log
+   attributes:
+      appname: elxmonitor
+      team: IEN Voice App Sys Admins
+ - name: ienv_limpmonitor
+   file: /ienv/alarms/limpmonitor-alarms*.log
+   attributes:
+      appname: limpmonitor 
+      team: IEN Voice App Sys Admins
+ - name: ienv_lc
+   file: /ienv/alarms/lc-alarms*.log
+   attributes:
+      appname: lc 
+      team: IEN Voice App Sys Admins
+ - name: ienv_lr
+   file: /ienv/alarms/lr-alarms*.log
+   attributes:
+      appname: lr 
+      team: IEN Voice App Sys Admins
+ - name: ienv_limp
+   file: /ienv/alarms/limp-alarms*.log
+   attributes:
+      appname: limp 
+      team: IEN Voice App Sys Admins
+ - name: ienv_limp-rde
+   file: /ienv/alarms/limp-rde-alarms*.log  
+   attributes:
+      appname: limp-rde 
+      team: IEN Voice App Sys Admins
+ - name: ienv_limp-i3
+   file: /ienv/alarms/limp-i3-alarms*.log  
+   attributes:
+      appname: limp-i3
+      team: IEN Voice App Sys Admins
+ - name: ienv_mop-monitor
+   file: /ienv/alarms/mop-monitor-alarms*.log
+   attributes:
+      appname: mop-monitor
+      team: IEN Voice App Sys Admins
+ - name: ienv_pcm
+   file: /ienv/alarms/pcm-alarms*.log
+   attributes:
+      appname: pcm
+      team: IEN Voice App Sys Admins
+ - name: ienv_pcm-ctl
+   file: /ienv/alarms/pcm-ctl-alarms*.log
+   attributes:
+      appname: pcm-ctl
+      team: IEN Voice App Sys Admins
+ - name: ienv_elx-cimran
+   file: /ienv/alarms/elx-cimran-alarms*.log
+   attributes:
+      appname: elx-cimran
+      team: IEN Voice App Sys Admins
+ - name: ienv_lc-cimran
+   file: /ienv/alarms/lc-cimran-alarms*.log
+   attributes:
+      appname: lc-cimran
+      team: IEN Voice App Sys Admins
+ - name: ienv_mp
+   file: /ienv/alarms/mp-alarms*.log
+   attributes:
+      appname: mp
+      team: IEN Voice App Sys Admins
+ - name: ienv_cmp
+   file: /ienv/alarms/cmp-alarms*.log
+   attributes:
+      appname: cmp
+      team: IEN Voice App Sys Admins
+ - name: ienv_pac
+   file: /ienv/alarms/pac-alarms*.log
+   attributes:
+      appname: pac
+      team: IEN Voice App Sys Admins
+ - name: ienv_tsf
+   file: /ienv/alarms/tsf-alarms*.log
+   attributes:
+      appname: tsf
+      team: IEN Voice App Sys Admins
+ - name: ienv_mop
+   file: /ienv/alarms/mop-alarms*.log
+   attributes:
+      appname: mop
+      team: IEN Voice App Sys Admins
+ - name: ienv_datashare-instance
+   file: /ienv/alarms/datashare-instance-alarms*.log
+   attributes:
+      appname: datashare-instance
+      team: IEN Voice App Sys Admins
+ - name: ienv_vsd-instance
+   file: /ienv/alarms/vsd-instance-alarms*.log
+   attributes:
+      appname: vsd-instance
+      team: IEN Voice App Sys Admins
+ - name: ienv_syslogd
+   file: /ienv/alarms/syslogd-alarms*.log
+   attributes:
+      appname: syslogd
+      team: IEN Voice App Sys Admins
+ - name: ienv_jradiusd
+   file: /ienv/alarms/jradiusd-alarms*.log
+   attributes:
+      appname: jradiusd
+      team: IEN Voice App Sys Admins
+ - name: ienv_lpg
+   file: /ienv/alarms/lpg-alarms*.log
+   attributes:
+      appname: lpg
+      team: IEN Voice App Sys Admins
+ - name: ienv_ecr
+   file: /ienv/alarms/ecr-alarms*.log
+   attributes:
+      appname: ecr
+      team: IEN Voice App Sys Admins
+ - name: ienv_rs
+   file: /ienv/alarms/rs-alarms*.log
+   attributes:
+      appname: rs
+      team: IEN Voice App Sys Admins
+ - name: ienv_ars-monitor
+    file: /ienv/alarms/ars-monitor-alarms*.log
+    attributes:
+       appname: ars-monitor
+      team: IEN Voice App Sys Admins

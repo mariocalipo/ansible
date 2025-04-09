@@ -1,0 +1,48 @@
+---
+- name: Install New Relic VM monitor on RHEL 7
+  hosts: all
+  become: true
+  vars:
+    new_relic_version: latest
+  tasks:
+  - name: test access to newrelic systems
+    wait_for:
+         host: "{{ item }}"
+         port: 443
+         timeout: 5
+    with_items:
+    - download.newrelic.com
+    - infra-api.newrelic.com
+    - identity-api.newrelic.com
+    - infrastructure-command-api.newrelic.com
+    - log-api.newrelic.com
+    - metric-api.newrelic.com
+
+  - name: Write New Relic License Key to /etc/newrelic-infra.yml
+    lineinfile: 
+      path: /etc/newrelic-infra.yml
+      regexp: "^license_key: {{newrelic_license_key}}$"
+      line: "license_key: {{newrelic_license_key}}"
+      insertafter: EOF
+      create: yes
+
+  - name: Check if newrelic-infra.repo exists
+    stat:
+      path: "/etc/yum.repos.d/newrelic-infra.repo"
+    register: stat_repo
+
+  - name: Download newrelic-infra.repo
+    get_url:
+      url: "https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64/newrelic-infra.repo"
+      validate_certs: no
+      dest: "/etc/yum.repos.d/newrelic-infra.repo"
+      force: true
+      timeout: 600
+    when: stat_repo.stat.exists == False
+
+  - name: Install New Relic RPM 
+    yum:
+      name: newrelic-infra
+      state: "{{new_relic_version}}"
+      enablerepo: newrelic-infra
+      disablerepo: '*'

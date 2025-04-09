@@ -1,0 +1,5 @@
+drives:
+  data: K
+  install: F
+  logs: L
+  tempdb: T

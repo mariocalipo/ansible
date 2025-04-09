@@ -1,0 +1,23 @@
+- name: config_timezone.yml
+  ansible.builtin.import_tasks: config_timezone.yml
+
+- name: config_drive.yml
+  ansible.builtin.import_tasks: config_drive.yml
+
+- name: config_long_path.yml
+  ansible.builtin.import_tasks: config_long_path.yml
+
+- name: config_ssl_tls.yml
+  ansible.builtin.import_tasks: config_ssl_tls.yml
+
+- name: Get info for Octopus Service
+  ansible.windows.win_service_info:
+    name: "OctopusDeploy Tentacle: Polling"
+  register: octopus_service
+
+- name: install_polling_tentacle.yml
+  ansible.builtin.import_tasks: install_polling_tentacle.yml
+  when: not octopus_service.exists
+
+- name: Import install_datadog.yml
+  ansible.builtin.import_tasks: install_datadog.yml

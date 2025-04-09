@@ -1,0 +1,17 @@
+---
+- name: Reboot server 
+  shell: sleep 2 && /sbin/shutdown -r now
+  async: 1
+  poll: 0
+  args:
+    executable: /bin/bash
+  ignore_errors: true
+  register: rebooting
+
+- name: Wait for server reboot
+  wait_for_connection:
+    connect_timeout: 20
+    sleep: 5
+    delay: 5
+    timeout: 600
+  when: rebooting

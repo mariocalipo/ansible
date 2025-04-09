@@ -1,0 +1,45 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Compliance playbook
+# Author: Pillar Squad
+
+# Check if DeepSecurity service exists
+- name: "Check if Deep Security Agent Service file exists"
+  stat:
+    path: /usr/lib/systemd/system/ds_agent.service
+  register: dsagentservicefile
+
+# If Deepsecurity service not exists, fails
+- fail:
+    msg: "Deep Security service not exists"
+  when: dsagentservicefile.stat.exists == False and 
+        inventory_hostname != "lnoncpp021.ciandt.global"
+  ignore_errors: yes
+
+# If Deepsecurity service not exists, show debug message
+#- debug:
+#    msg: "Deep Security service not exists"
+#  when: dsagentservicefile.stat.exists == False
+
+# If DeepSecurity service exists, check if its running
+- name: "Checking Deep Security service status"
+  command: systemctl status ds_agent.service
+  when: dsagentservicefile.stat.exists == True and 
+        inventory_hostname != "lnoncpp021.ciandt.global"
+  tags: deepsecurity
+  register: ds_status
+  ignore_errors: yes
+
+ # If DeepSecurity service is not running, start it
+- name: "Start Deep Security service if not running"
+  service:
+    name: ds_agent
+    state: started
+  when: ("'running' not in ds_status.stdout") and 
+        (dsagentservicefile.stat.exists == True) and 
+        (inventory_hostname != "lnoncpp021.ciandt.global")
+  tags: deepsecurity
+

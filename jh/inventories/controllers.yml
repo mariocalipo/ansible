@@ -1,0 +1,14 @@
+ansible_controllers:
+  hosts:
+    ansiblectl-lab:
+      ansible_host: 34.27.9.159
+      ansible_port: 22
+    ansiblectl-dev:
+      ansible_host: 127.0.0.1
+      ansible_port: 2222
+    ansiblectl-stg:
+      ansible_host: 127.0.0.1
+      ansible_port: 2222
+    ansiblectl-prd:
+      ansible_host: 127.0.0.1
+      ansible_port: 2222

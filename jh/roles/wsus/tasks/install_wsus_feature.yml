@@ -1,0 +1,25 @@
+- name: Install WSUS
+  ansible.windows.win_feature:
+    name:
+      - UpdateServices
+      - UpdateServices-WidDB
+      - UpdateServices-Services
+      - UpdateServices-RSAT
+      - UpdateServices-API
+    state: present
+  register: win_feature
+
+- name: Reboot if installing WSUS feature requires it
+  ansible.windows.win_reboot:
+  when: win_feature.reboot_required
+
+- name: Create WSUS directory
+  ansible.windows.win_file:
+    path: "{{ wsus_content_folder }}"
+    state: directory
+
+- name: Install IIS Manager to manage WSUS Pool
+  ansible.windows.win_feature:
+    name:
+      - Web-Mgmt-Console
+    state: present

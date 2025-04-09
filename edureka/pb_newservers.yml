@@ -1,0 +1,10 @@
+# Edureka Ansible Playbook: New Server Provisioning
+# Author: Mario Calipo
+
+# Look for devices inside "newservers" tag
+- hosts: newservers
+
+# Look for "apache" roles
+  roles:
+    - apache_tomcat
+    - apache_maven

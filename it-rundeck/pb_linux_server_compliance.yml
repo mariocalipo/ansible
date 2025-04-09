@@ -1,0 +1,22 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Playbook: Linux Server Compliance
+# Author: Pillar Squad
+
+# Look for devices inside "compliance" tag
+- hosts: compliance
+  become: yes
+  become_user: root
+
+# Configure "password_splunk" variable
+  vars:
+    - name: password_splunk
+      private: no
+      unsafe: yes
+
+# Look for "linux_server_compliance" role
+  roles:
+    - linux_server_compliance

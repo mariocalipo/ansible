@@ -1,0 +1,16 @@
+- name: WSUS IIS App Pool Configuration Check
+  community.windows.win_iis_webapppool:
+    name: WsusPool
+    state: present
+
+# Following a best practice doc from MS
+# https://learn.microsoft.com/en-us/troubleshoot/mem/configmgr/update-management/windows-server-update-services-best-practices#disable-recycling-and-configure-memory-limits
+- name: WSUS IIS App Pool Settings 
+  community.windows.win_iis_webapppool:
+    name: WsusPool
+    attributes:
+      queueLength: 2000
+      processModel.idleTimeout: 0
+      processModel.pingingEnabled: false
+      recycling.periodicRestart.privateMemory: 0
+      recycling.periodicRestart.time: 0

@@ -1,0 +1,7 @@
+- name: reload the configurations
+  command: '/bin/nmcli con reload'
+  listen: 'reload network config'
+
+- name: Up the interface to enact the changes
+  command: '/bin/nmcli con up ens192'
+  listen: 'reload network config'

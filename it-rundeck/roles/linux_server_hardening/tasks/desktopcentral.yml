@@ -1,0 +1,110 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Hardening playbook
+# Author: marioc@ciandt.com
+
+# Check if DesktopCentral service exists
+- name: "Check if Desktop Central Service file exists"
+  stat:
+    path: /etc/systemd/system/dcservice.service
+  register: dcservicefile
+- debug:
+    msg: "File Desktop Central Service exists..."
+  when: dcservicefile.stat.exists
+- debug:
+    msg: "File Desktop Central Service not found..."
+  when: dcservicefile.stat.exists == False
+  tags: dcservice
+
+# If DesktopCentral service exists, remove it
+#- name: "Remove Desktop Central, if dcservice.file exists..."
+#  command: "/usr/local/desktopcentralagent/RemoveDCAgent.sh"
+#  when: dcservicefile.stat.exists == True
+#  tags: desktopcentral
+
+# Wait DesktopCentral service be removed
+#- name: "Wait for dcservice.service to be removed (this can take a few minutes...)"
+#  wait_for:
+#    path: /etc/systemd/system/dcservice.service
+#    state: absent
+#  tags: desktopcentral
+
+# Stop and Disable DesktopCentral service
+#- name: "Stop and Disable Desktop Central Service"
+#  service:
+#    name: dcservice
+#    state: stopped
+#    enabled: no
+#  when: dcservicefile.stat.exists
+#  ignore_errors: yes
+#  tags: desktopcentral
+
+# Install UNZIP (CentOS/RHEL/AmazonLinux)
+- name: "Check if UNZIP is installed. If not, install it on CentOS/RHEL/AmazonLinux"
+  yum:
+    name: unzip
+    state: present
+  when: ansible_facts['distribution']=="CentOS" or
+        ansible_facts['distribution']=="RedHat" or
+        ansible_facts['distribution']=="Amazon"
+  tags: desktopcentral
+
+# Install UNZIP (Ubuntu)
+- name: "Check if UNZIP is installed. If not, install it on Ubuntu"
+  apt:
+    name: unzip
+    state: present
+  when: ansible_facts['distribution']=="Ubuntu"
+  tags: desktopcentral
+
+# Download DesktopCentral and store into /opt
+- name: "Download and Unzip Desktop Central Linux Agent from store.ciandt.com"
+  unarchive:
+    src: https://store.ciandt.com/apps/DCLinuxAgent.zip
+    dest: /opt/
+    remote_src: True
+    owner: root
+    group: root
+    mode: u=rwx,g=rwx,o=r
+  when: dcservicefile.stat.exists == False
+
+# Find DesktopCentral Installer
+- name: "Find Desktop Central installer"
+  find:
+      paths: /opt/DCLinuxAgent/
+      patterns: "DesktopCentral_LinuxAgent.bin"
+  register: result
+  when: dcservicefile.stat.exists == False
+  tags: desktopcentral
+
+# Execute install script
+- name: "Install Desktop Central"
+  shell: "cd /opt/DCLinuxAgent/ && bash {{ item.path }}"
+  with_items: '{{result.files}}'
+  when: dcservicefile.stat.exists == False
+
+# Wait till DesktopCentral service become available
+- name: "Wait for dcservice.service to be created (this can take a few minutes...)"
+  wait_for:
+    path: /etc/systemd/system/dcservice.service
+    state: present
+    timeout: 1200
+  when: dcservicefile.stat.exists == False  
+  tags: desktopcentral
+
+# Enable DesktopCentral service
+- name: "Enable Desktop Central Service"
+  service:
+    name: dcservice
+    enabled: yes
+  tags: desktopcentral
+
+# Restart DesktopCentral service
+- name: "Restart Desktop Central Service"
+  service:
+    name: dcservice
+    state: restarted
+  tags: desktopcentral

@@ -1,0 +1,22 @@
+plugin: gcp_compute
+projects:
+  - prod-lendsoln-lv-mod
+regions:
+  - us-central1
+  - us-east4
+filters:
+  - status = RUNNING
+  - scheduling.automaticRestart = true AND status = RUNNING
+keyed_groups:
+  - key: labels
+groups:
+  is: "'product' in (labels|list)"
+hostnames:
+  - name
+name_suffix: ".lv.local"
+retrieve_image_info: true
+auth_kind: application
+compose:
+  environment_type: "'prd'"
+  active_directory_domain_full: "'lv.local'"
+  active_directory_domain_short: "'LV'"

@@ -1,0 +1,208 @@
+- name: Set content folder in WSUS
+  win_command: 'WsusUtil.exe postinstall CONTENT_DIR={{ wsus_content_folder }}'
+  args:
+    chdir: "{{ ansible_env.ProgramFiles }}\\Update Services\\Tools"
+    creates: "{{ wsus_content_folder }}\\WSUSContent"
+
+- name: Get Current Enabled Languages in WSUS
+  win_shell: |
+    $wsuscfg = (Get-WsusServer).GetConfiguration()
+    [PSCustomObject]@{
+      'AllUpdateLanguagesEnabled' = $wsuscfg.AllUpdateLanguagesEnabled
+      'EnabledUpdateLanguages'    = @($wsuscfg.GetEnabledUpdateLanguages())
+    } | ConvertTo-Json
+  register: _currentwsuslanguages_command
+  changed_when: false
+
+- name: Parse Current Enabled Languages from JSON
+  set_fact:
+    _currentwsuslanguages: "{{ _currentwsuslanguages_command.stdout | from_json() }}"
+
+# Set update languages
+- name: Set Update Languages
+  win_shell: |
+    [array]$languages = ConvertFrom-Json -InputObject '{{ wsus_languages | flatten(levels=1) | to_json(ensure_ascii=False) }}'
+    $wsusconfig = (Get-WsusServer).GetConfiguration()
+    $wsusconfig.AllUpdateLanguagesEnabled = $false
+    $wsusconfig.SetEnabledUpdateLanguages($languages)
+    $wsusconfig.Save()
+  when: _currentwsuslanguages.EnabledUpdateLanguages | symmetric_difference(wsus_languages) | length > 0 or
+        _currentwsuslanguages.AllUpdateLanguagesEnabled
+
+# Configure how computers are added to WSUS, server or client managed
+- name: Configuring How Groups are Assigned
+  win_shell: |
+    $wsus = Get-WSUSServer
+    $wsusConfig = $wsus.GetConfiguration()
+    if ($wsusConfig.TargetingMode -ne "{{ wsus_targeting_mode }}"){
+      $wsusConfig.TargetingMode = "{{ wsus_targeting_mode }}"
+      $wsusConfig.Save()
+      Write-Output "Changed"
+    }
+  register: _wsus_targeting_mode
+  changed_when: "'change' in _wsus_targeting_mode.stdout"
+
+# Set which update classifications to pull updates for
+- name: Set WSUS Classifications
+  win_shell: |
+    [array]$current = (Get-WsusServer).GetSubscription().GetUpdateClassifications()
+    [array]$allClassifications = Get-WsusClassification
+    [array]$shouldTitles = ConvertFrom-Json -InputObject @'
+    {{ wsus_classifications_list | flatten(levels=1) | to_json() }}
+    '@
+    [array]$should = ($allClassifications | Where-Object { $_.Classification.Title -in $shouldTitles }).Classification
+    if ($null -ne $should){
+        $diffs = Compare-Object $current $should -Property Id
+        if ($diffs) {
+          foreach ($classification in $diffs) {
+            if ($classification.SideIndicator -eq '<=') {
+              $allClassifications.Where{ $_.Classification.Id -eq $classification.Id } | Set-WsusClassification -Disable
+            }
+            if ($classification.SideIndicator -eq '=>') {
+              $allClassifications.Where{ $_.Classification.Id -eq $classification.Id } | Set-WsusClassification
+            }
+          }
+          Write-Output "change"
+        }
+    }
+  register: _classificationsenable_command
+  changed_when: "'change' in _classificationsenable_command.stdout"
+
+# Set which products to pull updates for 
+# One var is set to use product titles
+# The other var is used for when there is more than one product with the same title
+- name: Set WSUS Products
+  win_shell: |
+    [array]$current = (Get-WsusServer).GetSubscription().GetUpdateCategories()
+    [array]$allProducts = Get-WSUSProduct
+    [array]$shouldTitles = ConvertFrom-Json -InputObject @'
+    {{ wsus_products_list_titles | flatten(levels=1) | to_json() }}
+    '@
+    [array]$shouldIds = ConvertFrom-Json -InputObject @'
+    {{ wsus_products_list_ids | flatten(levels=1) | to_json() }}
+    '@
+    [array]$should = ($allProducts | Where-Object { $_.Product.Title -in $shouldTitles -or $_.Product.Id -in $shouldIds }).Product
+    if ($null -ne $should){
+      $diffs = Compare-Object $current $should -Property Id
+      if ($diffs) {
+        $changed = $true
+        foreach ($product in $diffs) {
+          if ($product.SideIndicator -eq '<=') {
+            $allProducts.Where{ $_.Product.Id -eq $product.Id } | Set-WsusProduct -Disable
+          }
+          if ($product.SideIndicator -eq '=>') {
+            $allProducts.Where{ $_.Product.Id -eq $product.Id } | Set-WsusProduct
+          }
+        }
+      }
+      Write-Output "change"
+    }
+  register: _productsenable_command
+  changed_when: "'change' in _productsenable_command.stdout"
+
+# Set schedule for when update syncs happen
+- name: Set Automatic Daily Synchronization
+  win_shell: |
+    $changed = $false
+    $newTime = [TimeSpan]::new({{ wsus_sync_daily_time.hour }}, {{ wsus_sync_daily_time.minute }}, 0)
+    $wsussubscription = (Get-WSUSServer).GetSubscription()
+    if (-not $wsussubscription.SynchronizeAutomatically) {
+      $wsussubscription.SynchronizeAutomatically = $true
+      $changed = $true
+    }
+    if ($wsussubscription.SynchronizeAutomaticallyTimeOfDay -ne $newTime) {
+      $wsussubscription.SynchronizeAutomaticallyTimeOfDay = $newTime
+      $changed = $true
+    }
+    if ($wsussubscription.NumberOfSynchronizationsPerDay -ne 1) {
+      $wsussubscription.NumberOfSynchronizationsPerDay = ({{ wsus_sync_daily_time.perDay }}
+      $changed = $true
+    }
+    if ($changed) {
+      $wsussubscription.Save()
+      Write-Output "change"
+    }
+  register: _dailysync_command
+  changed_when: "'change' in _dailysync_command.stdout"
+
+  # Default Automatic Rule approves all critical and security updates for all computers
+  # Default Automatic Rule created automatically with WSUS install
+- name: Enable Default Automatic Approval Rule
+  win_shell: |
+    [bool]$should = {{ wsus_enable_default_approval_rule | bool | int }}
+    $automatic_approval_rule = (Get-WsusServer).GetInstallApprovalRules() |
+      Where-Object { $_.Name -eq 'Default Automatic Approval Rule' }
+    if ($automatic_approval_rule.Enabled -ne $should) {
+      $automatic_approval_rule.Enabled = $should
+      $automatic_approval_rule.Save()
+      $automatic_approval_rule.ApplyRule()
+      Write-Output "change"
+    }
+  register: _autorule_command
+  changed_when: "'change' in _autorule_command.stdout"
+
+  # Creates auto approval rule for PowerShell Updates
+- name: Create Rule for PowerShell Auto Approval Updates
+  win_shell: |
+    $WSUSServer   = Get-WsusServer
+
+    [bool]$should = {{ wsus_enable_powershell_approval_rule | bool | int }}
+    $automatic_power_shell_approval_rule = (Get-WsusServer).GetInstallApprovalRules() |
+      Where-Object { $_.Name -eq 'PowerShell Upgrades' }
+
+    if ($null -eq $automatic_power_shell_approval_rule) {
+        # Create approval rule
+        $ApprovalRule = $WSUSServer.CreateInstallApprovalRule('PowerShell Upgrades')
+        # Set rule classifications
+        $UC = $ApprovalRule.GetUpdateClassifications()
+        $C  = $WSUSServer.GetUpdateClassifications() | 
+            Where-Object -Property Title -eq 'Updates'
+        $UC.Add($C)
+        $ApprovalRule.SetUpdateClassifications($UC)
+        # Set rule categories
+        $Product = $ApprovalRule.GetCategories()
+        $P = $WSUSServer.GetUpdateCategories() | 
+            Where-Object -Property Title -eq 'PowerShell - x64'
+        $Product.Add($P)
+        $ApprovalRule.SetCategories($Product)
+        # Set rule targets
+        $Type = 'Microsoft.UpdateServices.Administration.'+
+        'ComputerTargetGroupCollection'
+        $TargetGroups = New-Object $Type
+        $TargetGroups.Add(($WSUSServer.GetComputerTargetGroups() |
+            Where-Object -Property Name -eq "All Computers"))
+        $ApprovalRule.SetComputerTargetGroups($TargetGroups)
+        # Save approval rule
+        $ApprovalRule.Save()
+        Write-Output "change"
+    }
+  register: _autorule_powershell_create_command
+  changed_when: "'change' in _autorule_powershell_create_command.stdout"
+
+- name: Enable PowerShell Auto Approval Updates Rule
+  win_shell: |
+    [bool]$should = {{ wsus_enable_powershell_approval_rule | bool | int }}
+    $automatic_approval_rule = (Get-WsusServer).GetInstallApprovalRules() |
+      Where-Object { $_.Name -eq 'PowerShell Upgrades' }
+    if ($automatic_approval_rule.Enabled -ne $should) {
+      $automatic_approval_rule.Enabled = $should
+      $automatic_approval_rule.Save()
+      $automatic_approval_rule.ApplyRule()
+      Write-Output "change"
+    }
+  register: _autorule_powershell_enable_command
+  changed_when: "'change' in _autorule_powershell_enable_command.stdout"
+
+- name: Create Computer Target Groups For VMs
+  win_shell: |
+    $WSUSServer   = Get-WsusServer
+
+    ${{ env }}_target_group = (Get-WsusServer).GetComputerTargetGroups() |
+      Where-Object { $_.Name -eq '{{ env }}-{{ project }}' }
+
+    if ($null -eq ${{ env }}_target_group) {
+      $WSUSServer.CreateComputerTargetGroup('{{ env }}-{{ project }}')
+      Write-Output "change"
+    }
+  register: _create_targetgroup_command
+  changed_when: "'change' in _create_targetgroup_command.stdout"

@@ -1,0 +1,44 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Compliance playbook
+# Author: marioc@ciandt.com
+
+# Check if Cortex XDR agent exists
+- name: "Check if Cortex XDR Agent Service file exists"
+  stat:
+    path: /etc/systemd/system/traps_pmd.service
+  register: cortexxdr
+  tags: cortexxdr
+
+# Download Cortex XDR and store into /opt
+- name: Download Cortex XDR and store into /opt
+  get_url:
+    url: https://store.ciandt.com/apps/XDRLinux.deb
+    dest: /opt/XDRLinux.deb
+    mode: u=rwx,g=rwx,o=r
+  when: cortexxdr.stat.exists == False and
+        ansible_facts['distribution']=="Ubuntu" and
+        ansible_distribution_version is version('21.00', '>=')
+
+# Install Cortex XDR 
+- name: "Install Cortex XDR"
+  command: "dpkg -i /opt/XDRLinux.deb"
+  when: cortexxdr.stat.exists == False and
+        ansible_facts['distribution']=="Ubuntu" and
+        ansible_distribution_version is version('21.00', '>=')
+
+# Make sure Cortex XDR agent is started and enabled
+- name: "Make sure Cortex XDR agent is started and enabled"
+  service:
+    name: traps_pmd
+    state: started
+    enabled: yes
+  tags: cortexxdr
+  when: cortexxdr.stat.exists == True and
+        ansible_facts['distribution']=="Ubuntu" and
+        ansible_distribution_version is version('21.00', '>=')
+
+

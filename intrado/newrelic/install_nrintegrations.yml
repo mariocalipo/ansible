@@ -1,0 +1,101 @@
+---
+# nri-apache.x86_64 : New Relic Infrastructure apache Integration extend the core New Relic
+# nri-cassandra.x86_64 : New Relic Infrastructure cassandra Integration extend the core New Relic
+# nri-consul.x86_64 : New Relic Infrastructure Consul Integration extend the core New Relic
+# nri-couchbase.x86_64 : New Relic Infrastructure couchbase Integration extend the core New Relic
+# nri-docker.x86_64 : New Relic Infrastructure docker Integration
+# nri-elasticsearch.x86_64 : New Relic Infrastructure elasticsearch Integration extend the core New Relic
+# nri-f5.x86_64 : New Relic Infrastructure f5 Integration extend the core New Relic
+# nri-haproxy.x86_64 : New Relic Infrastructure haproxy Integration extend the core New Relic
+# nri-ibmmq.x86_64 : Prometheus exporter for ibmmq https://github.com/ibm-messaging/mq-metric-samples
+# nri-jmx.x86_64 : New Relic Infrastructure jmx Integration extend the core New Relic
+# nri-kafka.x86_64 : New Relic Infrastructure kafka Integration extend the core New Relic
+# nri-memcached.x86_64 : New Relic Infrastructure memcached Integration extend the core New Relic
+# nri-mongodb.x86_64 : New Relic Infrastructure mongodb Integration extend the core New Relic
+# nri-mssql.x86_64 : New Relic Infrastructure mssql Integration extend the core New Relic
+# nri-mysql.x86_64 : New Relic Infrastructure mysql Integration extend the core New Relic
+# nri-nagios.x86_64 : New Relic Infrastructure nagios Integration extend the core New Relic
+# nri-nginx.x86_64 : New Relic Infrastructure nginx Integration extend the core New Relic
+# nri-oracledb.x86_64 : New Relic Infrastructure oracledb Integration extend the core New Relic
+# nri-postgresql.x86_64 : New Relic Infrastructure postgresql Integration extend the core New Relic
+# nri-powerdns.x86_64 : Prometheus exporter for powerdns https://github.com/lotusnoir/prometheus-powerdns_exporter
+# nri-rabbitmq.x86_64 : New Relic Infrastructure rabbitmq Integration extend the core New Relic
+# nri-redis.x86_64 : New Relic Infrastructure redis Integration extend the core New Relic
+# nri-snmp.x86_64 : New Relic Infrastructure snmp Integration extend the core New Relic
+# nri-varnish.x86_64 : New Relic Infrastructure varnish Integration extend the core New Relic
+# nri-vsphere.x86_64 : New Relic Infrastructure vsphere Integration extend the core New Relic
+#
+# These can be passed on the command line or in a config file.
+# 
+# intfile: <which integration to install. See the above list, you do not need the .x86_64 part>
+# intgcfg: This is the integration configuration file to be installed in /etc/newrelic-infra/integrations.d/
+#           Presumably you need a configuration file but I can't promise that all of them need one.
+# appteamcfg: This is the name of the logging.d file to be installed if the requester wants the example logging file put into place.
+#             Otherwise, this would be installed with the newrelic-infrastructure install
+# examplefile: If this is defined and set to an existing example file in /etc/newrelic/logging.d, then that file will be copied to the specified name in 'appteamcfg'
+#              Note that some of these file do not exist until after the integration is installed.
+
+- name: Install New Relic Integration
+  hosts: all
+  become: true
+  vars:
+    new_relic_version: latest
+    intfile: nri-mysql
+    intgcfg: mysql-config.yml
+    appteamcfg: dbadmins.yml
+    examplefile: mysql-log.yml.example
+  tasks:
+  - name: Check if newrelic-infra.yml exists to see if newrelic is installed
+    stat:
+      path: "/etc/newrelic-infra.yml"
+    register: stat_yaml
+
+  - name: Fail if newrelic is not installed
+    fail: 
+        msg: "The newrelic infrastructure agent must be installed to install the integration."
+    when: stat_yaml.stat.exists == False
+
+  - name: Check if newrelic-infra.repo exists
+    stat:
+      path: "/etc/yum.repos.d/newrelic-infra.repo"
+    register: stat_repo
+
+  - name: Fail if newrelic is not installed
+    fail: 
+        msg: "The newrelic repo is not setup"
+    when: stat_repo.stat.exists == False
+
+  - name: Install the requested integration
+    yum:
+      name: '{{ intfile }}'
+      state: latest
+      enablerepo: newrelic-infra
+      disablerepo: '*'
+
+  - name: copy intgcfg to target if requested
+    copy: 
+      dest: "/etc/newrelic-infra/integrations.d/{{ intgcfg }}"
+      src: "files/{{ intgcfg }}"
+    when: intgcfg is defined
+    notify: restart newrelic
+
+  - name: create a backup copy of the sudoers file
+    copy:
+      src: "/etc/newrelic-infra/logging.d/{{ examplefile }}"
+      dest: "/etc/newrelic-infra/logging.d/{{ appteamcfg }}"
+      remote_src: true
+    when: examplefile is defined
+    notify: restart newrelic
+
+#  - name: copy to target if requested
+#    copy: 
+#      dest: "/etc/newrelic-infra/logging.d/{{ appteamcfg }}"
+#      src: "files/{{ appteamcfg }}"
+#    when: appteamcfg is defined
+#    notify: restart newrelic
+
+  handlers:
+  - name: restart newrelic
+    service:
+      name: 'newrelic-infra'
+      state: restarted

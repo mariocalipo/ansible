@@ -1,0 +1,32 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Windows Server Commands playbook
+# Author: Pillar Squad
+
+# Import tasks below:
+
+- name: Run basic PowerShell script
+  ansible.windows.win_powershell:
+    script: |
+      ipconfig
+
+- name: Run basic PowerShell script
+  ansible.windows.win_powershell:
+    script: |
+      ipconfig /all
+
+- name: Check if Service status
+  win_service:
+    name: "{{ servicename }}"
+  register: service_info
+
+- debug: msg="{{service_info}}"
+
+- name: Add a PowerShell module
+  community.windows.win_psmodule:
+    name: ActiveDirectory
+    state: present
+

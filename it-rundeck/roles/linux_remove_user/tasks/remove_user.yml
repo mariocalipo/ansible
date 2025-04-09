@@ -1,0 +1,14 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Remove User playbook
+# Author: marioc@ciandt.com
+
+# Remove user of username variable
+- name: Remove user
+  user:
+    name: "{{username}}"
+    state: absent
+    remove: yes

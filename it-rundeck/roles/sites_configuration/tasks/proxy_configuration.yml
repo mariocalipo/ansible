@@ -1,0 +1,116 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Sites Configuration playbook
+# Author: Pillar Squad
+
+# Check if site being created exists
+- name: "Check if site configuration file exists"
+  stat:
+    path: /etc/apache2/sites-available/{{ conffilename }}.conf
+  register: result
+  tags: proxy
+
+# Fail if site being created exists
+- name: Fail if site being created exists
+  fail: msg="O arquivo de configuração do site já existe."
+  when: result.stat.exists
+  tags: proxy
+
+# Copy modelo.conf to site.conf (sites-available)
+- name: Generate new site configuration file from modelo configuration (sites-available)
+  synchronize:
+    src: /etc/apache2/sites-available/modelo.conf
+    dest: /etc/apache2/sites-available/{{ conffilename }}.conf
+  delegate_to: "{{ inventory_hostname }}"
+  when: result.stat.exists == False
+  tags: proxy
+
+# Replace modelo_alterar to New Site Variable
+- name: Replace modelo_alterar to new site configurations
+  replace: 
+    path: /etc/apache2/sites-available/{{ conffilename }}.conf
+    regexp: 'modelo_alterar' 
+    replace: '{{ site }}'
+  when: result.stat.exists == False
+  tags: proxy
+
+# Uncomment proxy lines from /etc/apache2/sites-available/ site configuration and replace proxy_alterar to New Site Variable
+- name: Uncomment proxy lines
+  replace: 
+    path: /etc/apache2/sites-available/{{ conffilename }}.conf
+    regexp: '#Include proxy/proxy_alterar' 
+    replace: 'Include proxy/{{ conffilename }}.conf'
+  when: result.stat.exists == False
+  tags: proxy
+
+# Copy modelo.conf to site.conf (proxy)
+- name: Generate new site configuration file from modelo configuration (proxy)
+  synchronize:
+    src: /etc/apache2/proxy/modelo.conf
+    dest: /etc/apache2/proxy/{{ conffilename }}.conf
+  delegate_to: "{{ inventory_hostname }}"
+  when: result.stat.exists == False
+  tags: proxy
+
+# Replace proxy_rewrite_destination to new destination (proxy)
+- name: Replace proxy_rewrite_destination to new destination
+  replace: 
+    path: /etc/apache2/proxy/{{ conffilename }}.conf
+    regexp: 'destination_alterar' 
+    replace: '{{ proxy_rewrite_destination }}'
+  when: result.stat.exists == False
+  tags: proxy
+
+# Enable the new site
+- name: Enable the new site
+  command: "a2ensite {{ conffilename }}.conf"
+  tags: proxy
+
+# Check Apache configuration
+- name: Check the apache configuration
+  command: apache2ctl configtest
+  register: apache_result
+  ignore_errors: yes
+  tags: proxy
+
+#- debug:
+#    var: apache_result
+
+# Reverting the site if necessary
+- name: Disabling site
+  command: "a2dissite {{ conffilename }}.conf"
+  when: "'Syntax OK' not in apache_result.stderr"
+  tags: proxy
+
+# Remove file Sites-available with syntax error
+- name: Remove file sites-availave with syntax error
+  file:
+    path: /etc/apache2/sites-available/{{ conffilename }}.conf
+    state: absent
+  when: "'Syntax OK' not in apache_result.stderr"
+  tags: proxy
+
+# Remove file Proxy with syntax error
+- name: Remove file proxy with syntax error
+  file:
+    path: /etc/apache2/proxy/{{ conffilename }}.conf
+    state: absent
+  when: "'Syntax OK' not in apache_result.stderr"
+  tags: proxy
+
+# Show error message if apachectl fails
+- name: Debug message
+  fail: msg="Apache configuration is invalid. Please check before re-running the playbook."
+  when: "'Syntax OK' not in apache_result.stderr"
+  tags: proxy
+  
+# Reload Apache
+- name: Reload Apache
+  service: 
+    name: apache2 
+    state: reloaded
+  when: "'Syntax OK' in apache_result.stderr"
+  tags: proxy

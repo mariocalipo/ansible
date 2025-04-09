@@ -1,0 +1,47 @@
+# Create Group/Users tasks
+---
+- name: create group
+  group:
+    name="{{ugroup}}"
+    state=present
+
+- name: create users
+  user:
+    name: "{{item.uname}}"
+    comment: "{{item.gecos}}"
+    groups: "{{ugroup}}"
+    append: yes
+    shell: "{{item.shell}}"
+    password: "{{item.passwd}}"
+    update_password: on_create
+    state: present
+  register: users_created
+  with_items: "{{users}}"
+  notify: user_created
+
+- name: create .ssh directories for new users
+  file:
+    path: "/home/{{item.uname}}/.ssh"
+    state: directory
+    owner: "{{item.uname}}"
+    group: "{{item.uname}}"
+    mode: 0700
+  with_items: "{{user_keys}}"
+
+- name: copy authorized_keys file
+  copy:
+    owner: "{{item.uname}}"
+    group: "{{item.uname}}"
+    mode: 0600
+    src: "{{item.key}}"
+    dest: "/home/{{item.uname}}/.ssh/authorized_keys"
+  with_items: "{{user_keys}}"
+
+- name: copy profile
+  copy:
+    owner: "{{item.uname}}"
+    group: "{{item.uname}}"
+    mode: 0600
+    src: "{{item.profile}}"
+    dest: "/home/{{item.uname}}/{{item.profile_name}}"
+  with_items: "{{user_profile}}"

@@ -1,0 +1,50 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  -  name: Gather variables
+     include_vars: 
+         file: '{{ vaultfile }}'
+
+  -  name: Get facts for '{{ target_vm }}'
+     vmware_guest_info:
+         datacenter: '{{ target_dc }}'
+         folder: '{{ target_folder }}'
+         hostname: '{{ vcenterserver }}'
+         username: '{{ vcsuser }}'
+         password: '{{ vcsuserpass }}'
+         validate_certs: no
+         name: '{{ target_vm }}'
+     register: vmfacts
+     delegate_to: localhost
+
+  -  fail:
+         msg: "{{ target_vm }} {{ vmfacts.instance.hw_folder }} {{ target_folder }}"
+     when: not vmfacts.instance.hw_folder is match( target_folder )
+     #when: not vmfacts.instance.hw_folder + '/' == target_folder
+
+  -  name: Power off '{{ target_vm }}'
+     vmware_guest:
+         hostname: '{{ vcenterserver }}'
+         username: '{{ vcsuser }}'
+         password: '{{ vcsuserpass }}'
+         validate_certs: no
+         #name: '{{ target_vm }}'
+         uuid: '{{ vmfacts.instance.hw_product_uuid }}'
+         state: poweredoff
+     delegate_to: localhost
+
+  -  debug: 
+         msg: '{{ vmfacts.instance.hw_folder }} ----- {{ target_folder }}'
+
+  -  name: Remove VM from disk '{{ target_vm }}'
+     vmware_guest:
+         hostname: '{{ vcenterserver }}'
+         username: '{{ vcsuser }}'
+         password: '{{ vcsuserpass }}'
+         validate_certs: no
+         #name: '{{ target_vm }}'
+         uuid: '{{ vmfacts.instance.hw_product_uuid }}'
+         state: absent
+     delegate_to: localhost
+     when: vmfacts.instance.hw_folder is match( target_folder )

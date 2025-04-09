@@ -1,0 +1,21 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Playbook: Associate SS User
+# Author: marioc@ciandt.com
+
+# Look for devices inside "hardening" tag
+- hosts: linux
+  become: yes
+  become_user: root
+
+# Configure "username" variable
+  vars:
+    - name: username
+      private: no
+
+# Look for "linux_associate_user_ss" role
+  roles:
+    - linux_associate_user_ss

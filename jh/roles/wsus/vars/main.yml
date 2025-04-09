@@ -1,0 +1,87 @@
+---
+
+project: lendsoln-lv-mod
+
+wsus_content_folder: "F:\\WSUS" # F:\ = data drive, set in _tier_wsus.yml group_vars file
+
+wsus_languages:
+  - en
+
+wsus_targeting_mode: Client
+
+wsus_classifications_list:
+  - Critical Updates
+  - Definition Updates
+  - Feature Packs
+  - Security Updates
+  - Tools
+  - Update Rollups
+  - Updates
+  - Upgrades
+
+wsus_products_list_titles:
+  - ASP.NET Web and Data Frameworks
+  - ASP.NET Web Frameworks
+  - .NET 5.0
+  - .NET 6.0 
+  - .NET 7.0
+  - .NET 8.0
+  - .NET Core 2.1
+  - .NET Core 3.1
+  - Report Viewer 2005
+  - Report Viewer 2008
+  - Report Viewer 2010
+  - Visual Studio 2019
+  - Visual Studio 2022
+  - Windows Server 2016 for RS4
+  - PowerShell
+  - PowerShell - x64
+  - PowerShell Preview - x64
+  - SDK Components
+  - CAPICOM
+  - Microsoft ODBC Driver 17 for SQL Server
+  - Microsoft ODBC Driver 18 for SQL Server
+  - Microsoft OLE DB Driver 18 for SQL Server
+  - Microsoft OLE DB Driver 19 for SQL Server
+  - Microsoft SQL Server 2017
+  - Microsoft SQL Server 2019
+  - Microsoft SQL Server 2022
+  - Microsoft SQL Server Management Studio v17
+  - Microsoft SQL Server Management Studio v18
+  - Microsoft SQL Server Management Studio v19
+  - Microsoft SQL Server Management Studio v20
+  - SQL Server Feature Pack
+  - Microsoft Edge
+  - Microsoft Server operating system-21H2
+  - Microsoft Server Operating System-22H2
+  - Microsoft Server Operating System-23H2
+  - OOBE ZDP
+  - Server 2022 Hotpatch Category
+  - Windows - Client S, version 21H2 and later, Servicing Drivers 
+  - Windows - Client S, version 21H2 and later, Upgrade & Servicing Drivers
+  - Windows - Client, version 21H2 and later, Servicing Drivers
+  - Windows - Client, version 21H2 and later, Upgrade & Servicing Drivers
+  - Windows - Server, version 21H2 and later, Servicing Drivers
+  - Windows - Server, version 21H2 and later, Upgrade & Servicing Drivers
+  - Windows Media Dynamic Installer
+  - Windows Next Graphics Driver Dynamic update
+  - Windows Server 2019 and later, Servicing Drivers
+  - Windows Server 2019 and later, Upgrade & Servicing Drivers
+  - Windows Server 2019
+  - Windows Server Drivers
+  - Windows Server Manager – Windows Server Update Services (WSUS) Dynamic Installer
+  - Windows Server, version 1903 and later
+
+wsus_products_list_ids:
+  - e26d4a30-aba6-4616-a890-011970d93636 #Windows Server 2016 Developer Tools, Runtimes, and Redistributables
+  - 2a29bb74-e93b-4f03-9b7f-750ef71a6dd0 #Windows Server 2019 Datacenter: Azure Edition Hotpatch                                                               
+
+wsus_sync_daily_time:
+  hour: 2
+  minute: 22
+  #Using (Get-WSUSServer).GetSubscription() and manually setting time, above numbers set sync time to 9:22 PM
+  perDay: 1 #Amount of times a day to sync from Windows
+
+wsus_enable_default_approval_rule: true
+
+wsus_enable_powershell_approval_rule: true

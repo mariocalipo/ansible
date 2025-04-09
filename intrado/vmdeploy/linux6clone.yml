@@ -1,0 +1,14 @@
+---
+- hosts: all
+  gather_facts: no
+  vars:
+  - clonedavm: True
+  #vars_prompt:
+  #- name: installerpass
+  #  prompt: "root password"
+  #  private: yes
+  roles:
+  - { role: add_hostentry, connection: local, become: true, vars: { ansible_python_interpreter: $(which python) },when: buildvm is defined and buildvm }
+  - { role: clone_vm, connection: local, vars: { ansible_python_interpreter: $(which python) },when: buildvm is defined and buildvm }
+  - { role: configure_cl6, become: true }
+  - { role: reboot_server, become: true }

@@ -1,0 +1,34 @@
+---
+- name: Gathering facts
+  setup:
+
+- name: Update /etc/hosts
+  template: 
+      src: files/etchosts.tmpl
+      dest: /etc/hosts
+
+- name: Update resolv.conf
+  template: 
+      src: files/resolv.conf
+      dest: /etc/resolv.conf
+
+- name: Update /etc/sysconfig/networks-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
+  template:
+      src: files/ifcfg-prinic
+      dest: /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
+
+- name: Update /etc/sysconfig/networks-scripts/ifcfg-{{ second_nic }}
+  template:
+      src: files/ifcfg-secnic
+      dest: /etc/sysconfig/network-scripts/ifcfg-{{ second_nic }}
+  when: second_nic is defined
+
+- name: Update sudoers
+  template: 
+      src: files/sudoers6
+      dest: /etc/sudoers
+
+- name: Update /etc/sysconfig/network
+  template: 
+      src: files/network6
+      dest: /etc/sysconfig/network

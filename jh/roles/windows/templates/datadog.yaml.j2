@@ -1,0 +1,40 @@
+api_key: {{ datadog_api_key.stdout }}
+site: {{ agents.datadog.site }}
+env: {{ agents.datadog.environment }}
+logs_enabled: true
+logs_config:
+  processing_rules:
+    - type: exclude_at_match
+      name: exclude_PingAction
+      pattern: PingAction
+    - type: exclude_at_match
+      name: exclude_Pinghtml
+      pattern: ping\.html
+    - type: exclude_at_match
+      name: signalr
+      pattern: signalr
+tags: {{ agents.datadog.tags | default('') }}
+
+{% if datadog_apm_enabled | default('false') | bool %}
+
+apm_config:
+  enabled: false
+
+  filter_tags:
+   reject: ["service:bsl.treasury.local/jha.institution.webhost-redis","service:jha.institution.netcore.service.implementation-redis"]
+  
+   ignore_resources: ["(?i)(.*)health(.*)","(GET|POST) (.*)ping(.*)","(.*)logging(.*)","(.*)Logging(.*)","XREADGROUP","(.*)msmq","(.*)redis","(GET|POST) /signalr/(.*)"]
+
+process_config:
+  process_collection:
+    enabled: true
+
+logs:
+  enabled: true
+
+  - type: windows_event
+    channel_path: System
+    source: windows.events
+    service: Windows
+      
+{% endif %}

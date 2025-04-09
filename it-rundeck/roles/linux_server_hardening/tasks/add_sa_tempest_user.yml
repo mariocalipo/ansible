@@ -1,0 +1,46 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Task from Linux Server Hardening playbook
+# Author: marioc@ciandt.com
+
+# Create admin group
+- name: Adding admin group
+  group:
+    name: admin
+    system: yes
+    state: present
+  tags: tempest_user
+
+# Create tempest user
+- name: Creating Tempest SA User Account"
+  user: 
+    name: "{{ username_tempest }}"
+    groups: "admin"
+    shell: /bin/bash
+  tags: tempest_user
+
+# Unlock tempest user
+- name: "Unlock User"
+  shell: usermod -p "*" {{ username_tempest }}
+  become: true
+  tags: tempest_user
+
+# Set tempest user key
+- name: "Set authorized key in files/"
+  authorized_key:
+    user: "{{username_tempest}}"
+    key: "{{ lookup('file', './files/{{ username_tempest}}.pub')}}"
+  tags: tempest_user
+
+# Configure admin group passwordless option to sudo
+- name: Allow 'admin' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%admin'
+    line: '%admin ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+  tags: tempest_user

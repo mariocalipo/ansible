@@ -1,0 +1,19 @@
+---
+- name: Install New Relic VM monitor
+  hosts: all
+  become: true
+  vars:
+    new_relic_version: latest
+  tasks:
+  - name: test access to newrelic systems
+    wait_for:
+         host: "{{ item }}"
+         port: 443
+         timeout: 5
+    with_items:
+    - download.newrelic.com
+    - infra-api.newrelic.com
+    - identity-api.newrelic.com
+    - infrastructure-command-api.newrelic.com
+    - log-api.newrelic.com
+    - metric-api.newrelic.com

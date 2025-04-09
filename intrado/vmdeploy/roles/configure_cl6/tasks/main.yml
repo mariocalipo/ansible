@@ -1,0 +1,101 @@
+---
+- name: Gathering facts
+  setup:
+
+- name: touch the rebootme file
+  shell: 'touch /root/.rebootme'
+
+- name: Update /etc/hosts
+  template: 
+      src: files/etchosts.tmpl
+      dest: /etc/hosts
+      backup: true
+
+- name: Update resolv.conf
+  template: 
+      src: files/resolv.conf
+      dest: /etc/resolv.conf
+
+- name: Remove /etc/udev/rules.d/70-persistent-net.rules
+  file:
+      path: /etc/udev/rules.d/70-persistent-net.rules
+      state: absent
+
+- name: find old ifcfg-eth files
+  find:
+      paths: /etc/sysconfig/network-scripts
+      patterns: ifcfg-eth*
+  register: ifcfgeth
+
+- name: remove old ifcfg-eth files
+  file:
+      path: '{{ item }}'
+      state: absent
+  with_items: '{{ ifcfgeth.files }}'
+
+- name: Update /etc/sysconfig/networks-scripts/ifcfg-eth0
+  template:
+      src: files/ifcfg-prinic
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+
+- name: Update /etc/sysconfig/networks-scripts/ifcfg-{{ second_nic }}
+  template:
+      src: files/ifcfg-secnic
+      dest: /etc/sysconfig/network-scripts/ifcfg-{{ second_nic }}
+  when: second_nic is defined
+
+- name: Update /etc/sysconfig/network
+  template: 
+      src: files/network6
+      dest: /etc/sysconfig/network
+
+- name: Update sudoers
+  template: 
+      src: files/sudoers6
+      dest: /etc/sudoers
+      backup: true
+
+- name: remove any existing RHEL subs
+  shell: '/usr/sbin/subscription-manager clean'
+  ignore_errors: true
+
+- name: ensure katello.facts file is gone
+  file:
+      path: /etc/rhsm/facts/katello.facts
+      state: absent
+
+- name: Check for OV install
+  stat:
+      path: /opt/OV/bin/OpC/install/oainstall.sh
+  register: ovfile
+
+- name: Remove OV if installed
+  shell: '/opt/OV/bin/OpC/install/oainstall.sh -r -a -clean'
+  ignore_errors: true
+  when: ovfile.stat.exists
+
+- name: Ensure other OV dirs are gone
+  file:
+      path: '{{ item }}'
+      state: absent
+  with_items:
+  - /opt/OV
+  - /var/opt/OV
+  when: ovfile.stat.exists
+
+- name: find ssh_host keys
+  find:
+      paths: /etc/ssh
+      patterns: ssh_host*
+  register: the_host_keys
+
+- name: remove host keys
+  file:
+      path: '{{ item }}'
+      state: absent
+  with_items: '{{ the_host_keys.files }}'
+  
+- name: Remove /etc/udev/rules.d/70-persistent-net.rules
+  file:
+      path: /etc/udev/rules.d/70-persistent-net.rules
+      state: absent

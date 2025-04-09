@@ -1,0 +1,20 @@
+---
+- hosts: all
+  gather_facts: no
+###  vars:
+###      ansible_python_interpreter: /usr/bin/python2
+
+#  tasks:
+#  - name: Gather variables
+#    include_vars: 
+#      file: '{{ vaultfile }}'
+  roles:
+  - { role: add_hostentry, connection: local, become: true, vars: { ansible_python_interpreter: $(which python) },when: buildvm is defined and buildvm|bool }
+  - { role: deploy_vm, connection: local, vars: { ansible_python_interpreter: $(which python) },when: buildvm is defined and buildvm|bool }
+  - { role: configure_vm8, become: true, vars: { ansible_python_interpreter: $(which python3) }}
+###  - { role: configure_vm8, become: true ,vars: { ansible_python_interpreter: /usr/bin/python2 }}
+  - { role: add_unix_admins, user_to_become: "root", tags: ['unixadmins'], when: forceadminusers is defined and forceadminusers|bool }
+  - { role: final_config8, become: true }
+  - { role: reboot_server, }
+  - { role: intrado, become: true }
+  - { role: eitsnowp, become: true }

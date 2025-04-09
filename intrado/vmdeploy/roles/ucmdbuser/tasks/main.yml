@@ -1,0 +1,16 @@
+---
+- name: create ucmdbsvc group
+  group:
+      name: ucmdbsvc
+      system: yes
+      gid: 550
+   
+- name: create ucmdbsvc user
+  user:
+      name: ucmdbsvc
+      comment: 'uCMDB Discovery Account,mdbo.safetyservices@west.com'
+      system: yes
+      shell: /bin/bash
+      uid: 550
+      group: ucmdbsvc
+      ssh_keyfile: 'files/ucmdbsvc.pub'

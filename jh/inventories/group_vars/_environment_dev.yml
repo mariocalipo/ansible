@@ -1,0 +1,52 @@
+env: dev
+
+wsus_endpoint: wsus.dev.lv.local
+wsus_target_group: dev-lendsoln-lv-mod
+repository: gs://dev-lendsoln-lv-mod-ops-gcs/ops_packages
+
+agents:
+  octopus:
+    tentacle_gcs_uri: gs://dev-lendsoln-lv-mod-ops-gcs/ops_packages/octopus/Octopus.Tentacle.8.1.934-x64.msi
+    tentacle_version: 8.1.934-x64
+    uri: "http://octopus.dev.lv.local"
+  
+  qualys:
+    customer_id: "9c0e25e5-1d57-5af6-e040-10ac13043f6a"
+    web_service_uri: "https://qagpublic.qg1.apps.qualys.com/CloudAgent/"
+    linux_deb_dl_url: https://scsstorage3.blob.core.windows.net/repo/qualys/linux/DEB/current/QualysCloudAgent_Linux-Deb.deb
+    linux_deb_gcs_uri: gs://dev-lendsoln-lv-mod-ops-gcs/ops_packages/qualys/linux/deb/QualysCloudAgent.deb
+    linux_rpm_dl_url: https://scsstorage3.blob.core.windows.net/repo/qualys/linux/RPM/current/QualysCloudAgent_Linux.rpm
+    linux_rpm_gcs_uri: gs://dev-lendsoln-lv-mod-ops-gcs/ops_packages/qualys/linux/rpm/QualysCloudAgent.rpm
+    windows_dl_url: https://scsstorage3.blob.core.windows.net/repo/qualys/windows/current/QualysCloudAgent_Windows.exe
+    windows_gcs_uri: gs://dev-lendsoln-lv-mod-ops-gcs/ops_packages/qualys/windows/QualysCloudAgent.exe
+  
+  cybereason:
+    linux_deb_gcs_uri: gs://dev-lendsoln-lv-mod-ops-gcs/ops_packages/cybereason/cybereason-sensor-linux-padegogo.deb
+    windows_gcs_uri: gs://dev-lendsoln-lv-mod-ops-gcs/ops_packages/cybereason/cybereason-sensor-win64-padegogo.exe
+
+  datadog:
+    site: us5.datadoghq.com
+    environment: Development
+    # gcs_secret_name: svc-OP-datadog-p 
+    ddagentuser_name: "LENDSOLNLV\\svc-ddci-dev$"
+    agent_gcs_uri: gs://dev-lendsoln-lv-mod-ops-gcs/ops_packages/datadog/ddagent-cli-7.55.1.msi
+    agent_version: "7.55.1"
+    # agent_win_package_version: "7.55.1.0"
+    apm_gcs_uri: gs://dev-lendsoln-lv-mod-ops-gcs/ops_packages/datadog/datadog-dotnet-apm-2.53.1-x64.msi
+    apm_version: "2.53.1"
+    # apm_win_package_version: "2.53.1.0"
+    # msoledbsql_gcs_uri: gs://dev-is-ops-repository/is_ops_packages/datadog/msoledbsql.msi
+    # vc_redist_gcs_uri: gs://dev-is-ops-repository/is_ops_packages/datadog/VC_redist.x64.exe
+    tags:
+      - "env:development"
+      - "cost_center:118705"
+      - "business_unit.id:118705"
+      - "product_group:loanvantage"
+    confd:
+      - conf_dir: windows_service.d
+        filename: conf.yml
+        contents: |
+          instances:
+            - services:
+              - startup_type: automatic
+                trigger_start: false

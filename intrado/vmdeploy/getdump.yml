@@ -1,0 +1,199 @@
+###############
+## This playbook will build a vmdeploy profile.
+##
+## A vars file is required with the following structure.
+## 
+## Input:
+## Filename:  vars/profilevms.yml                   <--- use a filename that is meaningful
+##    vaultfile: vars/kzupanvault.yml
+##    vcenterserver: lmvap-vcs60.corp.intrado.pri
+##    vmstopoke:                                    <--- list of VMs to be profiled
+##    - ault0euasa9aad1
+##    - ault0eudca9edc1
+##    - ault0eudca9edc2
+## 
+## Output:
+##   vmdeploy profile
+##       dumps/<vmname>.profile
+##   vm information dump.  When dodumps is defined, a dumpfile will be created with all the information gathered from the queries
+##       dumps/<vmname>.out
+#####
+## Syntax: ansible-playbook -i localhost, -e"@vars/profilevms.yml" [ -e "dodumps=true" ] --ask-vault-pass bldprofile.yml
+###############
+---
+- hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+      ansible_python_interpreter: $(which python)
+  tasks:
+  - name: Gather variables
+    include_vars: 
+      file: '{{ vaultfile }}'
+
+#### vmsosinfo
+##KZ  - name: gather the facts
+##KZ    setup:
+##KZ    delegate_facts: yes
+##KZ    delegate_to: '{{item}}'
+##KZ #   ignore_errors: true
+##KZ    ignore_unreachable: true
+##KZ    become: true
+##KZ    vars:
+##KZ        ansible_python_interpreter: /usr/bin/python2
+##KZ    with_items: "{{ vmstopoke }}"
+##KZ    register: vmsos
+##KZ
+##KZ  - debug:
+##KZ        var: vmsos
+##KZ        verbosity: 3
+##KZ
+##KZ  - name: load vmsosinfo
+##KZ    set_fact:
+##KZ        vmsosinfo: "{{ vmsosinfo|default({}) | combine( { item.item: item } ) }}"
+##KZ    with_items: '{{ vmsos.results }}'
+##KZ
+#### vmsfolderinfo
+
+  - name: find profiled vms
+    vmware_guest_find:
+        hostname: '{{ vcenterserver }}'
+        username: '{{ vcsuser }}'
+        password: '{{ vcsuserpass }}'
+        validate_certs: no
+        name: '{{ item }}'
+#        uuid: '{{ vmsosinfo[ item ].ansible_facts.ansible_product_uuid | lower }}'
+#        uuid: "{{ vmsosinfo[ item ].ansible_facts.ansible_product_serial | regex_replace('VMware-(.*)','\\1') | regex_replace('[- ]','') | regex_replace('(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})','\\1-\\2-\\3-\\4-\\5' ) | lower }}"
+    with_items: '{{ vmstopoke }}'
+#    ignore_errors: true
+    register: vmfolders
+
+  - name: load vmsfolderinfo
+    set_fact:
+        vmsfolderinfo: "{{ vmsfolderinfo|default({}) | combine( { item.item: item.folders[0] } ) }}"
+    with_items: '{{ vmfolders.results }}'
+
+  - debug:
+        var: vmsfolderinfo
+        verbosity: 2
+
+#### vmsinfo
+  
+  - vmware_guest_info:
+        datacenter: "{{ vmsfolderinfo[item].split('vm')[0].split('/')[-1] }}"
+        folder: '{{ vmsfolderinfo[item] }}'
+        hostname: '{{ vcenterserver }}'
+        username: '{{ vcsuser }}'
+        password: '{{ vcsuserpass }}'
+        validate_certs: no
+        name: '{{ item }}'
+        name_match: last
+#        uuid: '{{ vmsosinfo[ item ].ansible_facts.ansible_product_uuid | lower }}'
+#        uuid: "{{ vmsosinfo[ item ].ansible_facts.ansible_product_serial | regex_replace('VMware-(.*)','\\1') | regex_replace('[- ]','') | regex_replace('(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})','\\1-\\2-\\3-\\4-\\5' ) | lower }}"
+
+    with_items: '{{ vmstopoke }}'
+    register: vms
+
+  - name: load vmsinfo
+    set_fact:
+        vmsinfo: "{{ vmsinfo|default({}) | combine( { item.item: item } ) }}"
+    with_items: '{{ vms.results }}'
+
+#  - name: fail
+#    fail:
+#        msg: "Failed!"
+#
+
+  - name: display the dict
+    debug:
+        var: vmsinfo
+        verbosity: 2
+
+#### vmsdiskinfo
+
+  - vmware_guest_disk_info:
+        datacenter: "{{ vmsfolderinfo[item].split('vm')[0].split('/')[-1] }}"
+        folder: '{{ vmsfolderinfo[item] }}'
+        hostname: '{{ vcenterserver }}'
+        username: '{{ vcsuser }}'
+        password: '{{ vcsuserpass }}'
+        validate_certs: no
+#        name: '{{ item }}'
+        uuid: '{{ vmsinfo[ item ].instance.hw_product_uuid }}'
+#        uuid: '{{ vmsosinfo[ item ].ansible_facts.ansible_product_uuid | lower }}'
+#        uuid: "{{ vmsosinfo[ item ].ansible_facts.ansible_product_serial | regex_replace('VMware-(.*)','\\1') | regex_replace('[- ]','') | regex_replace('(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})','\\1-\\2-\\3-\\4-\\5' ) | lower }}"
+    with_items: '{{ vmstopoke }}'
+    register: vmsdsks
+
+  - name: load vmsdiskinfo
+    set_fact:
+        vmsdiskinfo: "{{ vmsdiskinfo|default({}) | combine( { item.item: item } ) }}"
+    with_items: '{{ vmsdsks.results }}'
+
+  - name: display the dict
+    debug:
+        var: vmsdiskinfo
+        verbosity: 2
+
+#### vmsnetinfo
+
+  - vmware_guest_network:
+        datacenter: "{{ vmsfolderinfo[item].split('vm')[0].split('/')[-1] }}"
+        folder: '{{ vmsfolderinfo[item] }}'
+        hostname: '{{ vcenterserver }}'
+        username: '{{ vcsuser }}'
+        password: '{{ vcsuserpass }}'
+        gather_network_info: true
+        validate_certs: no
+        uuid: '{{ vmsinfo[ item ].instance.hw_product_uuid }}'
+#        name: '{{ item }}'
+#        uuid: '{{ vmsosinfo[ item ].ansible_facts.ansible_product_uuid | lower }}'
+#        uuid: "{{ vmsosinfo[ item ].ansible_facts.ansible_product_serial | regex_replace('VMware-(.*)','\\1') | regex_replace('[- ]','') | regex_replace('(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})','\\1-\\2-\\3-\\4-\\5' ) | lower }}"
+    with_items: '{{ vmstopoke }}'
+    register: vmsnets
+
+  - name: load vmsnetinfo
+    set_fact:
+        vmsnetinfo: "{{ vmsnetinfo|default({}) | combine( { item.item: item } ) }}"
+    with_items: '{{ vmsnets.results }}'
+
+  - debug:
+        var: vmsnetinfo
+        verbosity: 2
+
+#### vmshostinfo
+
+  - name: get vmware host facts
+    vmware_host_facts:
+        hostname: '{{ vcenterserver }}'
+        username: '{{ vcsuser }}'
+        password: '{{ vcsuserpass }}'
+        validate_certs: no
+        esxi_hostname: '{{ vmsinfo[item].instance.hw_esxi_host }}'
+    with_items: '{{ vmstopoke }}'
+    register: vmhosts
+
+  - name: load vmshostinfo
+    set_fact:
+        vmshostinfo: "{{ vmshostinfo|default({}) | combine( { item.item: item } ) }}"
+    with_items: '{{ vmhosts.results }}'
+
+  - debug:
+        var: vmshostinfo
+        verbosity: 2
+
+#### Create dump file
+
+##KZ  - name: Create profile files
+##KZ    template: 
+##KZ        src: 'files/bldcfgsz.tmpl'
+##KZ        dest: 'dumps/{{ item|lower }}.profile'
+##KZ    with_items: '{{ vmstopoke }}'
+
+  - name: Create dump files
+    template:
+        src: 'files/allinfo-noos.tmpl'
+        dest: 'dumps/{{ item|lower }}.out'
+    with_items: '{{ vmstopoke }}'
+    when: dodumps is defined
+

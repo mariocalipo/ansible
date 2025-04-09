@@ -1,0 +1,3 @@
+---
+- import_playbook: remove.yml
+- import_playbook: install_from_role.yml

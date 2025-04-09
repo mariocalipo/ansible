@@ -1,0 +1,17 @@
+statsdir /var/log/ntpstats/
+leapfile /etc/ntp.leapseconds
+driftfile /var/lib/ntp/ntp.drift
+statistics loopstats peerstats clockstats
+filegen loopstats file loopstats type day enable
+filegen peerstats file peerstats type day enable
+filegen clockstats file clockstats type day enable
+
+disable monitor
+
+server ntp.ciandt.global iburst minpoll 6 maxpoll 10
+restrict ntp.ciandt.global nomodify notrap noquery
+
+restrict default kod notrap nomodify nopeer noquery
+restrict 127.0.0.1
+restrict -6 default kod notrap nomodify nopeer noquery
+restrict -6 ::1

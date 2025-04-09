@@ -1,0 +1,31 @@
+# UNAUTHORIZED ACCESS TO THIS PLAYBOOK IS PROHIBITED
+# You must have explicit, authorized permission to access or configure this playbook. 
+# Unauthorized attempts and actions to access or use this may result in civil and/or criminal penalties. 
+# All activities performed on this are logged and monitored.
+
+# CIANDT Ansible Playbook: Linux Server Hardening
+# Author: marioc@ciandt.com
+
+# Look for devices inside "hardening" tag
+- hosts: hardening
+  become: yes
+  become_user: root
+
+# Configure "sethostname" variable
+  vars:
+    - name: sethostname
+      private: no
+      unsafe: no
+
+# Configure "password_splunk" variable
+    - name: password_splunk
+      private: no
+      unsafe: yes
+
+# Configure "deepsecurity_level" variable
+    - name: deepsecurity_level
+      private: no
+
+# Look for "linux_server_hardening" role
+  roles:
+    - linux_server_hardening

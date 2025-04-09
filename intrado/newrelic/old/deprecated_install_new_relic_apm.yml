@@ -1,0 +1,51 @@
+---
+- name: Install New Relic VM monitor
+  hosts: all
+  become: true
+  vars:
+    new_relic_version: latest
+  tasks:
+  - name: test access to newrelic systems
+    wait_for:
+         host: "{{ item }}"
+         port: 443
+         timeout: 5
+    with_items:
+    - download.newrelic.com
+
+  - name: Download newrelic apm
+    get_url:
+      url: "https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip"
+      validate_certs: no
+      dest: "/opt/"
+      force: true
+      timeout: 600
+
+  - name: Unarchive the zip file
+    unarchive:
+      remote_src: true
+      src: /opt/newrelic-java.zip
+      dest: /opt/
+      owner: root
+      group: root
+      mode: 0644
+      creates: /opt/newrelic
+
+  - name: Write New Relic License Key to /opt/newrelic/newrelic.yml
+    replace: 
+      path: /opt/newrelic/newrelic.yml
+      regexp: "^  license_key: '<%= license_key %>'"
+      replace: "  license_key: {{newrelic_license_key}}"
+      create: yes
+
+  - name: Write New Relic App Name to /opt/newrelic/newrelic.yml
+    lineinfile: 
+      path: /opt/newrelic/newrelic.yml
+      regexp: "^  app_name: My Application$"
+      replace: "  app_name: {{ newrelic_appname }}"
+      create: yes
+
+  - name: Clean up
+    file: 
+      path: /opt/newrelic-java.zip
+      state: absent
